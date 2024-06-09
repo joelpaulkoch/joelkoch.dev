@@ -4,10 +4,9 @@ defmodule JoelKoch.Dev.LivebookLayout do
 
   def template(assigns) do
     ~H"""
-      <article>
-        <%=  {:safe, render @inner_content} %>
-      </article>
+    <article>
+      <%= {:safe, render(@inner_content)} %>
+    </article>
     """
   end
 end
-

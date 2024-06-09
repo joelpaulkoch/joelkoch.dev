@@ -5,7 +5,6 @@ defmodule JoelKoch.Dev.RootLayout do
   def template(assigns) do
     ~H"""
     <!DOCTYPE html>
-
     <html lang="en">
       <head>
         <meta charset="utf-8" />
@@ -14,9 +13,9 @@ defmodule JoelKoch.Dev.RootLayout do
 
         <title>
           <%= [@page[:title], JoelKoch.Dev]
-              |> Enum.filter(& &1)
-              |> Enum.intersperse("|")
-              |> Enum.join(" ") %>
+          |> Enum.filter(& &1)
+          |> Enum.intersperse("|")
+          |> Enum.join(" ") %>
         </title>
 
         <link rel="stylesheet" href="/css/app.css" />
@@ -24,7 +23,7 @@ defmodule JoelKoch.Dev.RootLayout do
 
       <body>
         <main>
-          <%= render @inner_content %>
+          <%= render(@inner_content) %>
         </main>
       </body>
 
@@ -36,4 +35,3 @@ defmodule JoelKoch.Dev.RootLayout do
     |> Phoenix.HTML.Safe.to_iodata()
   end
 end
-
