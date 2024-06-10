@@ -21,10 +21,11 @@ defmodule JoelKoch.Dev.RootLayout do
         <link rel="stylesheet" href="/css/app.css" />
       </head>
 
-      <body class="bg-white text-black dark:text-neutral-200 dark:bg-neutral-800 antialiased">
-        <main class="max-w-7xl mx-auto min-h-dvh ">
+      <body class="min-h-dvh flex flex-col bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">
+        <main class="grow">
           <%= render(@inner_content) %>
         </main>
+        <.footer />
       </body>
 
       <%= if Mix.env() == :dev do %>
@@ -33,5 +34,35 @@ defmodule JoelKoch.Dev.RootLayout do
     </html>
     """
     |> Phoenix.HTML.Safe.to_iodata()
+  end
+
+  def footer(assigns) do
+    ~H"""
+    <div class="mx-16">
+    <footer class="mx-auto mt-16 flex w-full max-w-7xl shrink-0 flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-neutral-800 py-8 transition hover:border-white sm:flex-row">
+      <p class="">
+        © 2024 Joel Koch
+      </p>
+      <nav>
+        <a href="/test" class="rounded-md p-2 ring-white transition hover:ring">
+          Nav somewhere
+        </a>
+      </nav>
+      <nav>
+        <a href="/test" class="rounded-md p-2 ring-white transition hover:ring">
+          Nav somewhere
+        </a>
+      </nav>
+      <nav>
+        <a href="/test" class="rounded-md p-2 ring-white transition hover:ring">
+          Nav somewhere
+        </a>
+      </nav>
+      <p class="">
+        Made with Tableau
+      </p>
+    </footer>
+    </div>
+    """
   end
 end
