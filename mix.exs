@@ -31,6 +31,7 @@ defmodule JoelKoch.Dev.MixProject do
     [
       {:tableau, "~> 0.15"},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
+      {:tailwind_formatter, "~> 0.4", only: [:dev, :test], runtime: false},
       {:phoenix_live_view, "~> 0.20"}
 
       # {:dep_from_hexpm, "~> 0.3.0"},
