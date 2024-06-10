@@ -8,7 +8,8 @@ defmodule JoelKoch.Dev.MixProject do
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
       compilers: Mix.compilers(),
-      deps: deps()
+      deps: deps(),
+      aliases: aliases()
     ]
   end
 
@@ -16,6 +17,12 @@ defmodule JoelKoch.Dev.MixProject do
   def application do
     [
       extra_applications: [:logger]
+    ]
+  end
+
+  def aliases() do
+    [
+      build: ["tableau.build", "tailwind default --minify"]
     ]
   end
 
