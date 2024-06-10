@@ -21,8 +21,8 @@ defmodule JoelKoch.Dev.RootLayout do
         <link rel="stylesheet" href="/css/app.css" />
       </head>
 
-      <body>
-        <main>
+      <body class="bg-white text-black dark:text-neutral-200 dark:bg-neutral-800 antialiased">
+        <main class="max-w-7xl mx-auto min-h-dvh ">
           <%= render(@inner_content) %>
         </main>
       </body>
