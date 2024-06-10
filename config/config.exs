@@ -24,6 +24,8 @@ config :tailwind,
 
 config :tableau, :assets, tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
 
+config :tableau, :config, include_dir: "extra"
+
 config :tableau, :config,
   url: "http://localhost:4999",
   markdown: [
@@ -42,7 +44,7 @@ config :tableau, Tableau.SitemapExtension, enabled: true
 config :tableau, Tableau.RSSExtension,
   enabled: true,
   title: "joelkoch.dev",
-  description: "My beautiful website"
+  description: "My personal website"
 
 config :tableau, JoelKoch.Dev.LivebooksExtension, enabled: true
 
