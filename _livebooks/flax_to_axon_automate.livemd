@@ -1,0 +1,893 @@
+# Flax to Axon - Automate
+
+```elixir
+Mix.install([
+  {:axon, "~> 0.6.1"},
+  {:langchain, "~> 0.2.0"},
+  {:kino, "~> 0.12.3"}
+])
+```
+
+## Automating
+
+We've seen how we can convert a model written in Flax to an Axon model and use it from Elixir.
+Given how many new models emerge every week, we don't want to convert each of those by hand.
+So, let's try a fun thing and utilize one of these LLMs to help us out.
+
+<!-- livebook:{"break_markdown":true} -->
+
+We use Elixir's version of `langchain` to have good structure.
+
+We start with a system message to tell our AI friend its purpose.
+
+```elixir
+system_message = 
+  """
+  You are an expert in machine learning frameworks.
+  You help converting models from Python code in Flax linen framework to Elixir code in the Axon framework.
+  You will do this by following instructions step by step.
+  """
+```
+
+Then, we define a chain.
+
+```elixir
+alias LangChain.Chains.LLMChain
+alias LangChain.ChatModels.ChatOpenAI
+alias LangChain.Message
+
+{:ok, chain, response} =
+  %{
+    llm:
+      ChatOpenAI.new!(%{
+        model: "gpt-4",
+        seed: 0
+      })
+  }
+  |> LLMChain.new!()
+  |> LLMChain.add_message(Message.new_system!(system_message))
+  |> LLMChain.run()
+    
+```
+
+Let's check if our chain actually is an expert.
+
+```elixir
+message =
+  """
+  In flax there is the flax.linen.BatchNorm layer.
+  Which layer from Axon corresponds to that?
+  """
+
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+```
+
+That's the response I got:
+
+> In the Axon framework, the corresponding layer to Flax's `flax.linen.BatchNorm` is `Axon.batch_norm()`. Here is an example of how to use it:
+> 
+> ```elixir
+> Axon.input({nil, 10})
+> |> Axon.batch_norm(axis: [0, 2, 3], momentum: 0.99, eps: 1.0e-3)
+> ```
+> 
+> Notice that the parameters might be different due to the nature of the two different frameworks. Ensure to adjust the parameters to match your Flax layer as closely as possible.
+
+This actually looks good, but the arguments for `batch_norm` are not correct.
+Nevermind, we will provide the LLM with detailed instructions later and see how it goes.
+
+## Convert ResNet
+
+Alright, let's try the `FlaxResNetConvLayer` that we converted manually.
+
+<!-- livebook:{"break_markdown":true} -->
+
+```python
+class FlaxResNetConvLayer(nn.Module):
+    out_channels: int
+    kernel_size: int = 3
+    stride: int = 1
+    activation: Optional[str] = "relu"
+    dtype: jnp.dtype = jnp.float32
+
+    def setup(self):
+        self.convolution = nn.Conv(
+            self.out_channels,
+            kernel_size=(self.kernel_size, self.kernel_size),
+            strides=self.stride,
+            padding=self.kernel_size // 2,
+            dtype=self.dtype,
+            use_bias=False,
+            kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=self.dtype),
+        )
+        self.normalization = nn.BatchNorm(momentum=0.9, epsilon=1e-05, dtype=self.dtype)
+        self.activation_func = ACT2FN[self.activation] if self.activation is not None else Identity()
+
+    def __call__(self, x: jnp.ndarray, deterministic: bool = True) -> jnp.ndarray:
+        hidden_state = self.convolution(x)
+        hidden_state = self.normalization(hidden_state, use_running_average=deterministic)
+        hidden_state = self.activation_func(hidden_state)
+        return hidden_state
+```
+
+```elixir
+message =
+  """  
+  For each of the following instructions, reply only with the modified code of the model.
+  I will provide you with the model code and an instruction in the following format:
+  INSTRUCTION: here is the instruction you perform
+  MODEL: here is the model code you will modify
+  """
+
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+```
+
+Now we ask the LLM to follow the same steps as we did before.
+
+````elixir
+message =
+  """
+  INSTRUCTION: If there is a setup function, replace the calls to the stored methods in __call__ with the actual Flax layer, including the parameters.
+  MODEL:
+
+  ```python
+  class FlaxResNetConvLayer(nn.Module):
+    out_channels: int
+    kernel_size: int = 3
+    stride: int = 1
+    activation: Optional[str] = "relu"
+    dtype: jnp.dtype = jnp.float32
+
+    def setup(self):
+        self.convolution = nn.Conv(
+            self.out_channels,
+            kernel_size=(self.kernel_size, self.kernel_size),
+            strides=self.stride,
+            padding=self.kernel_size // 2,
+            dtype=self.dtype,
+            use_bias=False,
+            kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=self.dtype),
+        )
+        self.normalization = nn.BatchNorm(momentum=0.9, epsilon=1e-05, dtype=self.dtype)
+        self.activation_func = ACT2FN[self.activation] if self.activation is not None else Identity()
+
+    def __call__(self, x: jnp.ndarray, deterministic: bool = True) -> jnp.ndarray:
+        hidden_state = self.convolution(x)
+        hidden_state = self.normalization(hidden_state, use_running_average=deterministic)
+        hidden_state = self.activation_func(hidden_state)
+        return hidden_state
+  ```
+ """ 
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+```
+
+```elixir
+IO.puts(response.content)
+```
+
+Here the response:
+
+<!-- livebook:{"break_markdown":true} -->
+
+> Following your instructions, here is the modified code:
+
+> ```python
+> class FlaxResNetConvLayer(nn.Module):
+>    out_channels: int
+>    kernel_size: int = 3
+>    stride: int = 1
+>    activation: Optional[str] = "relu"
+>    dtype: jnp.dtype = jnp.float32
+> 
+>    # setup method removed 
+> 
+>    def __call__(self, x: jnp.ndarray, deterministic: bool = True) -> jnp.ndarray:
+>        convolution = nn.Conv(
+>            self.out_channels,
+>            kernel_size=(self.kernel_size, self.kernel_size),
+>            strides=self.stride,
+>            padding=self.kernel_size // 2,
+>            dtype=self.dtype,
+>            use_bias=False,
+>            kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=self.dtype),
+>        )  # ___ setup's self.convolution ___
+>        hidden_state = convolution(x)
+>        
+>        normalization = nn.BatchNorm(momentum=0.9, epsilon=1e-05, dtype=self.dtype)  # ___ setup's self.normalization ___
+>        hidden_state = normalization(hidden_state, use_running_average=deterministic)
+>        
+>        activation_func = ACT2FN[self.activation] if self.activation is not None else Identity()  # ___ setup's self.activation_func ___
+>        hidden_state = activation_func(hidden_state)
+>        
+>        return hidden_state
+> ```
+> 
+> In the modified code, the `__call__` method is updated wherein direct calls to Flax layers are made, instead of using the ones stored in `setup`. As such, every time `__call__` is used, new layer instances are created with the same configured parameters.
+
+<!-- livebook:{"break_markdown":true} -->
+
+This looks good, ready for the next round?
+
+````elixir
+message =
+  """
+  INSTRUCTION: If there are attributes, move them to the __call__ function as parameters and replace all the references of the attributes with the function parameters.
+  MODEL:
+  ```python
+  class FlaxResNetConvLayer(nn.Module):
+   out_channels: int
+   kernel_size: int = 3
+   stride: int = 1
+   activation: Optional[str] = "relu"
+   dtype: jnp.dtype = jnp.float32
+
+   # setup method removed 
+
+   def __call__(self, x: jnp.ndarray, deterministic: bool = True) -> jnp.ndarray:
+       convolution = nn.Conv(
+           self.out_channels,
+           kernel_size=(self.kernel_size, self.kernel_size),
+           strides=self.stride,
+           padding=self.kernel_size // 2,
+           dtype=self.dtype,
+           use_bias=False,
+           kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=self.dtype),
+       )  # ___ setup's self.convolution ___
+       hidden_state = convolution(x)
+       
+       normalization = nn.BatchNorm(momentum=0.9, epsilon=1e-05, dtype=self.dtype)  # ___ setup's self.normalization ___
+       hidden_state = normalization(hidden_state, use_running_average=deterministic)
+       
+       activation_func = ACT2FN[self.activation] if self.activation is not None else Identity()  # ___ setup's self.activation_func ___
+       hidden_state = activation_func(hidden_state)
+       
+       return hidden_state
+  ```
+  """
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+Again, the response.
+
+<!-- livebook:{"break_markdown":true} -->
+
+> Following your instructions, here is the modified code where all attributes are now parameters of the `__call__` function:
+> 
+> ```python
+> class FlaxResNetConvLayer(nn.Module):
+> 
+>    # Attributes removed
+> 
+>    def __call__(self, x: jnp.ndarray, out_channels: int, 
+>                 kernel_size: int = 3, stride: int = 1, 
+>                 activation: Optional[str] = "relu", 
+>                 dtype: jnp.dtype = jnp.float32, 
+>                 deterministic: bool = True) -> jnp.ndarray:
+>        convolution = nn.Conv(
+>            out_channels,
+>            kernel_size=(kernel_size, kernel_size),
+>            strides=stride,
+>            padding=kernel_size // 2,
+>            dtype=dtype,
+>            use_bias=False,
+>            kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=dtype),
+>        )
+>        hidden_state = convolution(x)
+> 
+>        normalization = nn.BatchNorm(momentum=0.9, epsilon=1e-05, dtype=dtype)
+>        hidden_state = normalization(hidden_state, use_running_average=deterministic)
+> 
+>        activation_func = ACT2FN[activation] if activation is not None else Identity()
+>        hidden_state = activation_func(hidden_state)
+> 
+>        return hidden_state
+> ```
+> 
+> In the modified code, the method `__call__` now takes the model attributes as parameters. All previous references to self attributes have been replaced with these parameters. The method `setup` and the attributes `out_channels, kernel_size, stride, activation, dtype` are removed from the class body and moved to `__call__`.
+
+<!-- livebook:{"break_markdown":true} -->
+
+LGTM! We proceed...
+
+````elixir
+message =
+  """
+  INSTRUCTION: In the __call__ function, move all additional parameters when calling the layers to the initialization of the layers. Each layer should be called with a single argument.
+  MODEL:
+  ```python
+  class FlaxResNetConvLayer(nn.Module):
+
+    # Attributes removed
+
+    def __call__(self, x: jnp.ndarray, out_channels: int, 
+                 kernel_size: int = 3, stride: int = 1, 
+                 activation: Optional[str] = "relu", 
+                 dtype: jnp.dtype = jnp.float32, 
+                 deterministic: bool = True) -> jnp.ndarray:
+        convolution = nn.Conv(
+            out_channels,
+            kernel_size=(kernel_size, kernel_size),
+            strides=stride,
+            padding=kernel_size // 2,
+            dtype=dtype,
+            use_bias=False,
+            kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=dtype),
+        )
+        hidden_state = convolution(x)
+
+        normalization = nn.BatchNorm(momentum=0.9, epsilon=1e-05, dtype=dtype)
+        hidden_state = normalization(hidden_state, use_running_average=deterministic)
+
+        activation_func = ACT2FN[activation] if activation is not None else Identity()
+        hidden_state = activation_func(hidden_state)
+
+        return hidden_state
+  ```
+  """
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+The response
+
+<!-- livebook:{"break_markdown":true} -->
+
+Following your instructions, here is the modified code where all the additional parameters are moved to the initialization of the layers:
+
+```python
+class FlaxResNetConvLayer(nn.Module):
+  
+    def __call__(self, x: jnp.ndarray, out_channels: int, 
+                 kernel_size: int = 3, stride: int = 1, 
+                 activation: Optional[str] = "relu", 
+                 dtype: jnp.dtype = jnp.float32, 
+                 deterministic: bool = True) -> jnp.ndarray:
+      
+        convolution = nn.Conv(
+            features=out_channels,
+            kernel_size=(kernel_size, kernel_size),
+            strides=stride,
+            padding=[(kernel_size // 2,kernel_size // 2)],
+            dtype=dtype,
+            use_bias=False,
+            kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=dtype)
+        )(x)
+
+        normalization = nn.BatchNorm(
+            use_running_average=deterministic, 
+            momentum=0.9, 
+            epsilon=1e-05, 
+            dtype=dtype
+        )(convolution)
+      
+        activation_func = ACT2FN[activation] if activation is not None else Identity()
+        hidden_state = activation_func(normalization)
+      
+        return hidden_state
+```
+
+Each layer now is initialized first with all necessary parameters, and then the data (`x` or output of the previous layer) is passed as a single argument. The normalization layer now receives the output of the convolution layer and not `x`. Also, changed the name of `out_channels`  to `features` and `padding` to a `(kernel_size // 2,kernel_size // 2)` pair per dimension as required by `flax.linen.Conv`.
+
+<!-- livebook:{"break_markdown":true} -->
+
+It did some extra work we didn't ask for. Nevermind, we just continue and see where it goes.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Next is replacing loops. There is no loop in this model, this should be a no op.
+
+````elixir
+message = 
+  """
+  INSTRUCTION: Extract loops to a seperate function, transform this function according to our rules. Plug the function into the pipeline.
+  MODEL:
+  ```python
+  class FlaxResNetConvLayer(nn.Module):
+    
+      def __call__(self, x: jnp.ndarray, out_channels: int, 
+                   kernel_size: int = 3, stride: int = 1, 
+                   activation: Optional[str] = "relu", 
+                   dtype: jnp.dtype = jnp.float32, 
+                   deterministic: bool = True) -> jnp.ndarray:
+        
+          convolution = nn.Conv(
+              features=out_channels,
+              kernel_size=(kernel_size, kernel_size),
+              strides=stride,
+              padding=[(kernel_size // 2,kernel_size // 2)],
+              dtype=dtype,
+              use_bias=False,
+              kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=dtype)
+          )(x)
+  
+          normalization = nn.BatchNorm(
+              use_running_average=deterministic, 
+              momentum=0.9, 
+              epsilon=1e-05, 
+              dtype=dtype
+          )(convolution)
+        
+          activation_func = ACT2FN[activation] if activation is not None else Identity()
+          hidden_state = activation_func(normalization)
+        
+          return hidden_state
+  ```
+  """
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+Ok... it got that there is no loop, but it also just didn't return any model code. We don't care, we take the latest code and move on.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Next, we do the "heavy lifting" of replacing the Flax layers with corresponding Axon layers.
+But first, we give the LLM a little bit more context with a conversion table for the layers.
+
+```elixir
+system_message_layers = 
+  """
+  This is a conversion table you must use to convert Flax layers to Axon layers.
+  | Framework | Layer | Params |     |     |     |     |     |     |     |     |     |     |     |     |     |     |     |
+  | --------- | ----- | ------ | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+  | Flax | nn.Conv   | features                  | kernel_size | strides | padding | dtype | use_bias | kernel_init        |
+  | Axon | Axon.conv | units (second pos. param) | kernel_size | strides | padding | -     | use_bias | kernel_initializer |
+  | Hints | | | single number instead of tuple | | predefined values (:valid) |
+  | --- | 
+  |Flax| nn.BatchNorm | use_running_average | axis | momentum | epsilon |dtype | param_dtype | use_bias |use_scale | bias_init |scale_init |axis_name |axis_index_groups |use_fast_variance |force_float32_reductions |parent |name |
+  |Axon| Axon.batch_norm | - | - | - | epsilon | - | - | - | - | beta_initializer(?) | gamma_initializer(?) | - | - |- | - | - |name |
+  | Hints | | | | | |
+  """
+system_message_initializers = 
+  """
+   This is a conversion table you must use to convert Flax initializers to Axon initializers.
+  | Framework | Initializer                      | Params         |               |                       |         |          |            |       |
+  | --------- | -------------------------------- | -------------- | ------------- | --------------------- | ------- | -------- | ---------- | ----- |
+  | Flax      | nn.initializers.variance_scaling | scale (1. pos) | mode (2. pos) | distribution (3. pos) | in_axis | out_axis | batch_axis | dtype |
+  | Axon  | Axon.Initializers.variance_scaling | scale | mode | distribution |
+  | Hints |                                    |       |      |              |
+  """
+
+```
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_messages([
+    Message.new_system!(system_message_layers),
+    Message.new_system!(system_message_initializers)
+  ])
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+Now we try the conveersion.
+
+````elixir
+message = 
+  """
+  INSTRUCTION: Replace the Flax layers with the corresponding Axon layers according to our conversion table. Take into account the parameters in the first parenthesis. Replace initializer functions with the corresponding Axon functions. Follow these rules to replace activation functions: If there is an activation parameter, and the code makes use of ACT2FN[activation], replace that with Axon.activation(activation). If there is an actual activation function called, replace it with Axon's activation function according to the conversion table. Replace all = for arguments with :
+  MODEL:
+  ```python
+  class FlaxResNetConvLayer(nn.Module):
+    
+      def __call__(self, x: jnp.ndarray, out_channels: int, 
+                   kernel_size: int = 3, stride: int = 1, 
+                   activation: Optional[str] = "relu", 
+                   dtype: jnp.dtype = jnp.float32, 
+                   deterministic: bool = True) -> jnp.ndarray:
+        
+          convolution = nn.Conv(
+              features=out_channels,
+              kernel_size=(kernel_size, kernel_size),
+              strides=stride,
+              padding=[(kernel_size // 2,kernel_size // 2)],
+              dtype=dtype,
+              use_bias=False,
+              kernel_init=nn.initializers.variance_scaling(2.0, mode="fan_out", distribution="normal", dtype=dtype)
+          )(x)
+  
+          normalization = nn.BatchNorm(
+              use_running_average=deterministic, 
+              momentum=0.9, 
+              epsilon=1e-05, 
+              dtype=dtype
+          )(convolution)
+        
+          activation_func = ACT2FN[activation] if activation is not None else Identity()
+          hidden_state = activation_func(normalization)
+        
+          return hidden_state
+  ```
+  """
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+Again, the LLM did more than we asked for. Let's see what we got.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Using the conversion table and your rules, here is how the model should look in Axon:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+defmodule AxonResNetConvLayer do
+  use Axon.Model
+
+  def forward(x, out_channels: out_channels, 
+              kernel_size: kernel_size \\ 3, 
+              stride: stride \\ 1, 
+              activation: activation \\ :relu, 
+              deterministic: deterministic \\ true) do
+    
+    convolution_init_fn = Axon.Initializers.variance_scaling(2.0, :fan_out, "normal")
+    convolution = Axon.conv(out_channels, kernel_size, stride: stride, 
+                            padding: :same, 
+                            use_bias: false, 
+                            kernel_initializer: convolution_init_fn)
+
+    normalization = Axon.batch_norm(epsilon: 1.0e-5)
+
+    x
+    |> convolution
+    |> normalization
+    |> Axon.activation(activation)
+  end
+end
+```
+
+Please note:
+
+1. I've replaced the Flax layers in the `__call__` function with their equivalent Axon counterparts, using the conversion table. Each Flax layer call is replaced with its Axon equivalent and all argument names were replaced with `:` from `=`.
+
+2. The activation function `ACT2FN[activation]` is replaced with `Axon.activation(activation)`.
+
+3. `dtype` and `deterministic` arguments are removed as these are not used in Axon.
+
+4. Padding is set to `:same` in the Conv layer, as mapping from Flax padding numbers to Axon's `:valid` or `:same` may need to be based on model behaviour.
+
+5. As per Axon's API, I've used the `:relu` atom for the activation function. If your `ACT2FN` dictionary maps string activation function names to function calls, you might need to replace `:relu` with `String.to_existing_atom(activation)` (similarly to the previous conversion example), as Axon's activation functions are called via atoms in the Snake Case (like `:relu`, `:tanh`, `:sigmoid`, etc.).
+
+As always, please be aware that not all Flax options are available in Axon and they may behave differently due to differing implementations.
+
+## Remove return
+
+````elixir
+message =
+  """
+  INSTRUCTION: Remove the return keyword at the end of the __call__ function. Keep what would be returned on this line.
+  MODEL:
+  ```elixir
+  defmodule axonresnetconvlayer do
+  use axon.model
+
+    def forward(x, out_channels: out_channels, 
+                kernel_size: kernel_size \\ 3, 
+                stride: stride \\ 1, 
+                activation: activation \\ :relu, 
+                deterministic: deterministic \\ true) do
+      
+      convolution_init_fn = axon.initializers.variance_scaling(2.0, :fan_out, "normal")
+      convolution = axon.conv(out_channels, kernel_size, stride: stride, 
+                              padding: :same, 
+                              use_bias: false, 
+                              kernel_initializer: convolution_init_fn)
+
+      normalization = axon.batch_norm(epsilon: 1.0e-5)
+
+      x
+      |> convolution
+      |> normalization
+      |> axon.activation(activation)
+    end
+  end
+  ```
+  """
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+Alright, it didn't have to do anything.
+
+````elixir
+message = 
+  """
+  INSTRUCTION:
+    Wrap the Axon model in a function that takes all the required parameters from the __call__ function
+    - name the function corresponding to the class name, but snake case.
+    - take the same arguments as the __call__ function
+    - remove the self argument
+    - remove the dtype argument
+    - remove the type specs if present
+    - wrap the function in do ... end
+  MODEL:
+  ```elixir
+  defmodule axonresnetconvlayer do
+  use axon.model
+
+    def forward(x, out_channels: out_channels, 
+                kernel_size: kernel_size \\ 3, 
+                stride: stride \\ 1, 
+                activation: activation \\ :relu, 
+                deterministic: deterministic \\ true) do
+      
+      convolution_init_fn = axon.initializers.variance_scaling(2.0, :fan_out, "normal")
+      convolution = axon.conv(out_channels, kernel_size, stride: stride, 
+                              padding: :same, 
+                              use_bias: false, 
+                              kernel_initializer: convolution_init_fn)
+
+      normalization = axon.batch_norm(epsilon: 1.0e-5)
+
+      x
+      |> convolution
+      |> normalization
+      |> axon.activation(activation)
+    end
+  end
+  ```
+  """
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+23:20:34.090 [error] retry: got response with status 429, will retry in 1000ms, 3 attempts left
+Following your instructions, here is the modified model:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+defmodule AxonResNetConvLayer do
+  
+  def axon_res_net_conv_layer(x, out_channels, kernel_size \\ 3, 
+              stride \\ 1, activation \\ :relu, 
+              deterministic \\ true) do
+    
+    convolution_init_fn = Axon.Initializers.variance_scaling(2.0, :fan_out, "normal")
+    
+    convolution = Axon.conv(out_channels, kernel_size, stride: stride, 
+                            padding: :same, 
+                            use_bias: false, 
+                            kernel_initializer: convolution_init_fn)
+
+    normalization = Axon.batch_norm(epsilon: 1.0e-5)
+
+    x
+    |> convolution
+    |> normalization
+    |> Axon.activation(activation)
+  end
+end
+```
+
+In the code:
+
+* I have replaced the `forward` function with `axon_res_net_conv_layer` which is the snake case name of the class.
+* `dtype` and `self` were not present as parameters.
+* Removed any type specifiers and there are none in the __call__ function.
+* `do ... end` is already present around the function block.
+  k
+
+````elixir
+message = 
+  """
+  INSTRUCTION: Check if the function is valid Elixir code. Otherwise, fix all issues by converting Python expressions to Elixir expressions. E.g. // corresponds to div, scientific notation like 1e-05 needs a decimal point in Elixir 1.0e-05.
+  MODEL:
+  ```elixir
+  defmodule AxonResNetConvLayer do
+  
+    def axon_res_net_conv_layer(x, out_channels, kernel_size \\ 3, 
+                stride \\ 1, activation \\ :relu, 
+                deterministic \\ true) do
+      
+      convolution_init_fn = Axon.Initializers.variance_scaling(2.0, :fan_out, "normal")
+      
+      convolution = Axon.conv(out_channels, kernel_size, stride: stride, 
+                              padding: :same, 
+                              use_bias: false, 
+                              kernel_initializer: convolution_init_fn)
+  
+      normalization = Axon.batch_norm(epsilon: 1.0e-5)
+  
+      x
+      |> convolution
+      |> normalization
+      |> Axon.activation(activation)
+    end
+  end
+  ```
+  """
+````
+
+```elixir
+{:ok, chain, response} =
+  chain
+  |> LLMChain.add_message(Message.new_user!(message))
+  |> LLMChain.run()
+
+IO.puts(response.content)
+```
+
+<!-- livebook:{"branch_parent_index":2} -->
+
+## Fix and run
+
+Let's fix some issues manually.
+
+```elixir
+defmodule AxonResNetConvLayer do
+  def axon_res_net_conv_layer(
+        x,
+        out_channels,
+        kernel_size \\ 3,
+        stride \\ 1,
+        activation \\ :relu
+      ) do
+    convolution_init_fn =
+      Axon.Initializers.variance_scaling(scale: 2.0, mode: :fan_out, distribution: :normal)
+
+    convolution =
+      Axon.conv(x, out_channels, kernel_size: kernel_size,
+        strides: stride,
+        padding: :same,
+        use_bias: false,
+        kernel_initializer: convolution_init_fn
+      )
+
+    normalization = Axon.batch_norm(convolution, epsilon: 1.0e-5)
+
+    
+    Axon.activation(normalization, activation)
+  end
+end
+```
+
+```elixir
+defmodule AxonResNetConvLayer2 do
+  def axon_res_net_conv_layer(
+        x,
+        out_channels,
+        kernel_size \\ {3, 3},
+        stride \\ 1,
+        activation \\ :relu,
+        deterministic \\ true
+      ) do
+    convolution_init_fn = Axon.Initializers.variance_scaling(scale: 2.0, mode: :fan_out, distribution: :normal)
+
+    convolution =
+      Axon.conv(x, out_channels, kernel_size: kernel_size,
+        strides: stride,
+        padding: :same,
+        use_bias: false,
+        kernel_initializer: convolution_init_fn
+      )
+
+    normalization = Axon.batch_norm(convolution, epsilon: 1.0e-5)
+
+    Axon.activation(normalization, activation)
+  end
+end
+```
+
+```elixir
+model = AxonResNetConvLayer2.axon_res_net_conv_layer(Axon.input("input"), 3, 3, 1, :relu)
+
+Axon.Display.as_graph(model, Nx.template({1, 2, 2}, :f32))
+```
+
+```elixir
+model = AxonResNetConvLayer2.axon_res_net_conv_layer(Axon.input("input"), 3, 3, 1, :relu)
+
+{init_fn, predict_fn} = Axon.build(model)
+```
+
+```elixir
+params = init_fn.(Nx.template({1, 1, 3}, {:f, 32}), %{}) |> dbg
+
+params =
+  %{
+    "batch_norm_0" => %{
+      "beta" => Nx.tensor([1, 2, 3], type: :f32),
+      "gamma" => Nx.tensor([1, 2, 3
+      ], type: :f32),
+      "mean" => Nx.tensor([1, 2, 3], type: :f32),
+      "var" => Nx.tensor([1, 2, 3], type: :f32)
+    },
+    "conv_0" => %{
+      "kernel" => Nx.broadcast(Nx.tensor(1, type: :f32), {3, 3, 3})
+    }
+  }
+
+predict_fn.(params, Nx.tensor([[[1.0, 2.0, 3.0]]]))
+# Inputs are referenced by name
+# predict_fn.(params, %{"input_0" => x, "input_1" => y})
+```
+
+## Comments
+
+Try not to give instruction but describe outcome, might be easier and if it's no op it's fine.
+
+Use langchain tools somewhere.
+
+Use bumblebee instead of chat gpt.
+
+### System message
+
+* explicitly say that nothing besides the model code should be returned.
+* If no action is performed, the unmodified code should be returned.
+* Provide conversion tables for layers, activations, initializations
+* provide conversion tables for Nx and Jax
+* detailed instructions for specific conversions.
+
+### conversion
+
+* opts vs parameters
+* auto generate conversion table
+
+### validation
+
+* safetensors as inputs and corresponding outputs in Python and Elixir
+* params as safetensors as well
+* extract validation into separate library
+
+### blog
+
+make helper function for send_user_message_and_print
