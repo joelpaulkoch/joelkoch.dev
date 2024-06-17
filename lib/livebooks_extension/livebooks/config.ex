@@ -3,7 +3,12 @@ defmodule JoelKoch.Dev.LivebooksExtension.Config do
 
   import Schematic
 
-  defstruct enabled: true, dir: "_livebooks", permalink: nil, layout: nil
+  defstruct enabled: true,
+            dir: "_livebooks",
+            permalink: nil,
+            layout: nil,
+            livebooks_root: nil,
+            discussions_url: nil
 
   def new(input), do: unify(schematic(), input)
 
@@ -14,7 +19,9 @@ defmodule JoelKoch.Dev.LivebooksExtension.Config do
         optional(:enabled) => bool(),
         optional(:dir) => str(),
         optional(:permalink) => str(),
-        optional(:layout) => str()
+        optional(:layout) => str(),
+        optional(:livebooks_root) => str(),
+        optional(:discussions_url) => str()
       },
       convert: false
     )

@@ -9,12 +9,22 @@ defmodule JoelKoch.Dev.LivebooksExtension.Livebooks.Livebook do
         Map.new(Application.get_env(:tableau, LivebooksExtension, %{}))
       )
 
+    livebook_url =
+      if livebook_config.livebooks_root do
+        livebook_config.livebooks_root
+        |> URI.parse()
+        |> URI.merge(filename)
+        |> URI.to_string()
+      end
+
     Application.put_env(:date_time_parser, :include_zones_from, ~N[2010-01-01T00:00:00])
 
     attrs
     |> Map.put(:__tableau_livebook_extension__, true)
     |> Map.put(:body, body)
     |> Map.put(:file, filename)
+    |> Map.put(:livebook_url, livebook_url)
+    |> Map.put(:discussions_url, livebook_config.discussions_url)
     |> Map.put(:layout, Module.concat([attrs[:layout] || livebook_config.layout]))
     |> Map.put_new_lazy(:title, fn ->
       with {:ok, document} <- Floki.parse_fragment(body),

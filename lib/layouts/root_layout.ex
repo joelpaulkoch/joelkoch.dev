@@ -19,6 +19,8 @@ defmodule JoelKoch.Dev.RootLayout do
         </title>
 
         <link rel="stylesheet" href="/css/app.css" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
       </head>
 
       <body class="min-h-dvh flex flex-col bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">

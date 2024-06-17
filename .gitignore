@@ -30,3 +30,9 @@ tableau_new-*.tar
 
 # direnv
 .direnv/
+
+# livebook artifacts
+/_livebooks/data
+/_livebooks/.asdf
+/_livebooks/flax2axon_env
+!/_livebooks/**/*.livemd

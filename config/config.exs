@@ -49,7 +49,9 @@ config :tableau, Tableau.RSSExtension,
 config :tableau, JoelKoch.Dev.LivebooksExtension,
   enabled: true,
   layout: "JoelKoch.Dev.LivebookLayout",
-  dir: "_livebooks"
+  dir: "_livebooks",
+  livebooks_root: "https://github.com/joelpaulkoch/joelkoch.dev/blob/main/",
+  discussions_url: "https://github.com/joelpaulkoch/joelkoch.dev/discussions"
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
