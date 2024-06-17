@@ -46,7 +46,10 @@ config :tableau, Tableau.RSSExtension,
   title: "joelkoch.dev",
   description: "My personal website"
 
-config :tableau, JoelKoch.Dev.LivebooksExtension, enabled: true
+config :tableau, JoelKoch.Dev.LivebooksExtension,
+  enabled: true,
+  layout: "JoelKoch.Dev.LivebookLayout",
+  dir: "_livebooks"
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 
