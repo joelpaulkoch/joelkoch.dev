@@ -27,9 +27,9 @@ jobs:
         key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
         restore-keys: ${{ runner.os }}-mix-
     - name: Install dependencies
-      run: mix deps.get
+      run: mix deps.get --only prod
     - name: Build site
-      run: mix build
+      run: MIX_ENV=prod mix build
     - name: Upload site artifact
       uses: actions/upload-pages-artifact@v3
   
