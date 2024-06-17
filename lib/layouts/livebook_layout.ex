@@ -9,7 +9,8 @@ defmodule JoelKoch.Dev.LivebookLayout do
         <Heroicons.chat_bubble_left_right class="min-h-16" />
       </a>
       <a href="https://github.com/joelpaulkoch/joelkoch.dev/blob/main/_livebooks/flax_to_axon_automate.livemd">
-        <img src="/github-mark-white.svg" />
+        <img src="/github-mark.svg" class="dark:hidden" />
+        <img src="/github-mark-white.svg" class="hidden dark:block" />
       </a>
     </div>
     <article>
