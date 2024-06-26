@@ -89,9 +89,9 @@ For now, we consider only Flax (linen) because it's similar to Axon and should b
 ```mermaid
 flowchart TD
     Input[Read Flax File]
-    Classes[Split into classes]
+    Classes[Split into classes and free functions]
 
-    subgraph each_class[for each class]
+    subgraph each_class[for each class/free function]
       subgraph conversion[Convert into Axon]
         Convert[Convert using LLM instructions]
         Replace[Replace previously \n converted classes \n with Axon function]
@@ -128,6 +128,10 @@ resnet_flax_path = Path.join(transformers_path, "models/resnet/modeling_flax_res
 {:ok, resnet_input} = File.read(resnet_flax_path)
 ```
 
+```elixir
+resnet_flax_path
+```
+
 ## Get inputs
 
 ```elixir
@@ -137,9 +141,15 @@ input = resnet_input
 We get the individual classes
 
 ```elixir
-input_classes = fn input ->
-[_ | classes] = String.split(input, "\nclass ")
-  for class <- classes, do: "class #{class}"
+inputs_fn = fn input ->
+  [_ | inputs] = Regex.split(~r{\n(class |def )\b}, input, include_captures: true)
+
+  separators = Enum.take_every(inputs, 2)
+  rest = Enum.drop(inputs, 1) |> Enum.take_every(2)
+
+  Enum.zip_with(separators, rest, fn sep, r ->
+    String.trim_leading(sep) <> r
+  end)
 end
 ```
 
@@ -574,43 +584,192 @@ end
 
 ### Detailed instructions how to convert the model
 
-```elixir
+````elixir
 conversion_instructions = [
   """
-  If there is a setup function, replace the calls to the stored methods in __call__ with the actual Flax layer, including the parameters.
+  If there is a setup function, replace the calls to the stored methods in `call` with the actual Flax layer, including the parameters.
+  Then remove the setup function.
+  Here an example.
+
+  INPUT:  
+  ```python
+  class SlightlyLargerSetup(nn.Module):  
+    def setup(self):
+      self.dense0 = nn.Dense(features=32)    
+      self.dropout = nn.Dropout(rate=0.5)
+      self.dense1 = nn.Dense(features=1)
+    
+    def __call__(self, x, training: bool):
+      x = self.dense0(x)
+      x = nn.relu(x)
+      x = self.dropout(x, deterministic=not training)
+      x = self.dense1(x)
+      x = nn.softmax(x)
+      return x
+  ```
+  
+  OUTPUT:  
+  ```python
+  class SlightlyLargerSetup(nn.Module):
+    
+    def __call__(self, x, training: bool):
+      x = nn.Dense(features=32)(x)
+      x = nn.relu(x)
+      x = nn.Dropout(rate=0.5)(x, deterministic=not training)
+      x = nn.Dense(features=1)(x)
+      x = nn.softmax(x)
+      return x
+  ```
   """,
   """
-  If there are attributes, move them to the __call__ function as parameters and replace all the references of the attributes with the function parameters.
+  If there are attributes, move them to the `call` function as parameters and replace all the references of the attributes with the function parameters.
+  Here an example.
+  
+  INPUT:  
+  ```python
+  class SlightlyLargerAttributes(nn.Module):
+    features_dense_0: int
+    dropout_rate: int
+    features_dense_1: int
+  
+    @nn.compact
+    def __call__(self, x, training: bool):
+      x = nn.Dense(features=self.features_dense_0)(x)
+      x = nn.relu(x)
+      x = nn.Dropout(rate=self.dropout_rate, deterministic=not training)(x)
+      x = nn.Dense(features=self.features_dense_1)(x)
+      x = nn.softmax(x)
+      return x
+  ```
+  
+  OUTPUT:  
+  ```python
+  class SlightlyLargerAttributes(nn.Module):
+
+    @nn.compact
+    def __call__(self, x, training: bool, features_dense_0: int, dropout_rate: int, features_dense_1: int):
+      x = nn.Dense(features=features_dense_0)(x)
+      x = nn.relu(x)
+      x = nn.Dropout(rate=dropout_rate, deterministic=not training)(x)
+      x = nn.Dense(features=features_dense_1)(x)
+      x = nn.softmax(x)
+      return x
+  ```
   """,
   """
-  In the __call__ function, move all additional parameters when calling the layers to the initialization of the layers. Each layer should be called with a single argument.
+  In the `call` function, move all additional parameters when calling the layers to the initialization of the layers. Each layer should be called with a single argument.
+  Here an example.
+
+  INPUT:  
+  ```python
+  class SlightlyLargerAttributes(nn.Module):
+
+    @nn.compact
+    def __call__(self, x, training: bool, features_dense_0: int, dropout_rate: int, features_dense_1: int):
+      x = nn.Dense(features=features_dense_0)(x)
+      x = nn.relu(x)
+      x = nn.Dropout(rate=dropout_rate)(x, deterministic=not training)
+      x = nn.Dense(features=features_dense_1)(x)
+      x = nn.softmax(x)
+      return x
+  ```
+  
+  OUTPUT:  
+  ```python
+  class SlightlyLargerAttributes(nn.Module):
+
+    @nn.compact
+    def __call__(self, x, training: bool, features_dense_0: int, dropout_rate: int, features_dense_1: int):
+      x = nn.Dense(features=features_dense_0)(x)
+      x = nn.relu(x)
+      x = nn.Dropout(rate=dropout_rate, deterministic=not training)(x)
+      x = nn.Dense(features=features_dense_1)(x)
+      x = nn.softmax(x)
+      return x
+  ```
+  """,  
+  """
+  Replace the Flax layers with the corresponding Axon layers according to our conversion table.  
+  Return only the Elixir code for the model. 
+  Take into account the parameters in the first parenthesis. 
+  Replace initializer functions with the corresponding Axon functions. 
+  Follow these rules to replace activation functions: 
+  If there is an activation parameter, and the code makes use of ACT2FN[activation], replace that with Axon.activation(activation). 
+  If there is an actual activation function called, replace it with Axon's activation function according to the conversion table. 
+  Replace all = for arguments with :  
+  Here an example.  
+
+  INPUT:    
+  ```python
+  class SlightlyLarger(nn.Module):
+  
+    @nn.compact
+    def __call__(self, x, training: bool):
+      x = nn.Dense(features=32)(x)
+      x = nn.relu(x)
+      x = nn.Dropout(rate=0.5, deterministic=not training)(x)
+      x = nn.Dense(features=1)(x)
+      x = nn.softmax(x)
+      return x
+  ```
+  
+  OUTPUT:  
+  ```python
+  class SlightlyLarger(nn.Module):
+    def __call__(self, x, training: bool):
+      x = Axon.dense(x, 32)
+      x = Axon.activation(x, :relu)
+      x = Axon.dropout(x, rate: 0.5)
+      x = Axon.dense(x, 1)
+      x = Axon.activation(x, :softmax)
+      x
+  ```
   """,
   """
-  Extract loops to a seperate function, transform this function according to our rules. Plug the function into the pipeline.
-  """,
-  """
-  Replace the Flax layers with the corresponding Axon layers according to our conversion table. Return only the Elixir code for the model. Take into account the parameters in the first parenthesis. Replace initializer functions with the corresponding Axon functions. Follow these rules to replace activation functions: If there is an activation parameter, and the code makes use of ACT2FN[activation], replace that with Axon.activation(activation). If there is an actual activation function called, replace it with Axon's activation function according to the conversion table. Replace all = for arguments with :
-  """,
-  """
-  Remove the return keyword at the end of the __call__ function. Keep what would be returned on this line.
-  """,
-  """
-   Wrap the Axon model in a function that takes all the required parameters from the __call__ function
+   Wrap the Axon model in a function that takes all the required parameters from the `call` function
   - name the function corresponding to the class name, but snake case.
-  - take the same arguments as the __call__ function
+  - take the same arguments as the `call` function
   - remove the self argument
   - remove the dtype argument
   - remove the type specs if present
   - wrap the function in do ... end
+
+  Here an example.
+
+  INPUT:  
+  ```python
+  class SlightlyLarger(nn.Module):
+    def __call__(self, x, training: bool):
+      x = Axon.dense(x, 32)
+      x = Axon.activation(x, :relu)
+      x = Axon.dropout(x, rate: 0.5)
+      x = Axon.dense(x, 1)
+      x = Axon.activation(x, :softmax)
+      x
+  ```
+
+  OUTPUT:  
+  ```python
+  def slightly_larger(x, training) do
+    x = Axon.dense(x, 32)
+      x = Axon.activation(x, :relu)
+      x = Axon.dropout(x, rate: 0.5)
+      x = Axon.dense(x, 1)
+      x = Axon.activation(x, :softmax)
+      x
+  end  
+  ```
+  """,  
+  """
+  Remove all `use` and `import` directives from the Elixir code.  
+  If there are none, return the unchanged code.
   """,
   """
-  Remove all `use ...` directives from the Elixir code.
-  """,
-  """
-  Check if the function is valid Elixir code. Otherwise, fix all issues by converting Python expressions to Elixir expressions. E.g. // corresponds to div, scientific notation like 1e-05 needs a decimal point in Elixir 1.0e-05.
+  Check if the function is valid Elixir code. 
+  Otherwise, fix all issues by converting Python expressions to Elixir expressions. E.g. // corresponds to div, scientific notation like 1e-05 needs a decimal point in Elixir 1.0e-05.
   """
 ]
-```
+````
 
 ```elixir
 instruction_message = fn instruction, model ->
@@ -815,10 +974,12 @@ end
 ```
 
 ```elixir
-model_string_fn = fn model_code ->
+model_string_fn = fn model_code, other_converted ->
   """
   defmodule ModelTest do
   #{model_code}
+
+  #{other_converted}
   end
   """
 end
@@ -863,7 +1024,7 @@ Then in Flax.
 
 ```elixir
 # need path for import, e.g. transformers.models.resnet.modeling_flax_resnet
-run_flax_and_save = fn module, module_args, input_path, output_path, params_path ->
+run_flax_and_save = fn module, module_args, input_path, output_path, params_path, import_path ->
   test_flax =
     """
     import jax
@@ -878,7 +1039,9 @@ run_flax_and_save = fn module, module_args, input_path, output_path, params_path
     from safetensors import safe_open
     from safetensors.flax import save_file
 
-    from transformers.models.resnet.modeling_flax_resnet import #{module}
+    from transformers.models.resnet.configuration_resnet import ResNetConfig
+
+    from #{import_path} import #{module}
 
     def unflatten_dict(d, sep='.'):
       result = {}
@@ -895,8 +1058,8 @@ run_flax_and_save = fn module, module_args, input_path, output_path, params_path
         for k in f.keys():
             tensors[k] = f.get_tensor(k)
 
+    print("initializing: #{module}(#{module_args})")
     model = #{module}(#{module_args})
-    key = random.key(0)
 
 
     params = {}
@@ -963,18 +1126,11 @@ end
 ```
 
 ```elixir
-build_model_fn = fn model_code, axon_function_name ->
-  ## find set of arguments we need
-  out_channels = 2
-  kernel_size = 3
-  stride = 1
-  activation = :relu
-  args = [Axon.input(""), out_channels, kernel_size, stride, activation]
-  
-  model = model_string_fn.(model_code)
+build_model_fn = fn model_code, axon_function_name, build_args, other_converted ->
+  model = model_string_fn.(model_code, other_converted)
   Code.eval_string(model, [], __ENV__)
-  
-  model = apply_model_fn.(ModelTest, axon_function_name, args)
+
+  model = apply_model_fn.(ModelTest, axon_function_name, build_args)
 
   Axon.build(model)
 end
@@ -988,35 +1144,49 @@ end
 ```
 
 ```elixir
-verify_model = fn model_code, data_dir, flax_model_name, axon_function_name ->
+verify_model = fn model_code,
+                  data_dir,
+                  flax_model_name,
+                  axon_function_name,
+                  input_shape,
+                  input_type,
+                  params_mapping,
+                  import_path,
+                  axon_build_args,
+                  flax_model_args,
+                  converted ->
+  stored_converted = Converted.all_to_string(converted)
   # build model
-  {init_fn, predict_fn} = build_model_fn.(model_code, axon_function_name)
+  {init_fn, predict_fn} =
+    build_model_fn.(model_code, axon_function_name, axon_build_args, stored_converted)
 
-  # get params and param mapping
-  input_shape = {1, 3, 3, 3}
-  input_type = :f32
-
-  {:ok, params} = get_params.(init_fn, input_shape, input_type)
-  param_mapping = get_param_mapping.()
+  params = get_params.(init_fn, input_shape, input_type)
+  # param_mapping = get_param_mapping.()
 
   # paths for safetensors files
   {axon_params_path, flax_params_path, axon_path, flax_path} =
     safetensor_files.(data_dir, axon_function_name)
 
   # save params
-  save_params.(params, param_mapping, axon_params_path, flax_params_path)
+  save_params.(params, params_mapping, axon_params_path, flax_params_path)
 
   # run axon, save data
   run_axon_and_save.(predict_fn, params, input_shape, axon_path)
 
-  # run flax, save data
-  flax_model_args = 3
-  run_flax_and_save.(flax_model_name, flax_model_args, axon_path, flax_path, flax_params_path)
+  # run flax, save data  
+  run_flax_and_save.(
+    flax_model_name,
+    flax_model_args,
+    axon_path,
+    flax_path,
+    flax_params_path,
+    import_path
+  )
 
   # check if results are the same 
   results = verification_results.(axon_path, flax_path)
 
-  if Enum.all?(results) do
+  if Enum.all?(results, fn {_k, res} -> res.same_result? end) do
     {:ok, model_code, results}
   else
     {:verification_failed, model_code, results}
@@ -1027,20 +1197,63 @@ end
 ## Run it all
 
 ```elixir
-conversion_chain = ConversionChain.new!(api_key, system_messages, conversion_messages)
-fix_chain = FixChain.new!(api_key)
+defmodule Converted do
+  use Agent
+
+  def start_link() do
+    Agent.start_link(fn -> %{} end)
+  end
+
+  def get(converted, key) do
+    Agent.get(converted, &Map.get(&1, key))
+  end
+
+  def put(converted, key, code) do
+    Agent.update(converted, &Map.put(&1, key, code))
+  end
+
+  def all_to_string(converted) do
+    converted_funcs = Agent.get(converted, &Map.values(&1))
+
+    Enum.join(converted_funcs, "\n")
+  end
+end
+
+{:ok, converted} = Converted.start_link()
 ```
 
 ```elixir
-model = input_classes.(input) |> Enum.at(1) 
+inputs = inputs_fn.(input) 
+
+select_list = for {input, index} <- Enum.with_index(inputs) do
+  [label | _] = String.split(input, "(")
+  {index, label}
+end
+
+```
+
+```elixir
+target_select = Kino.Input.select("Conversion Target", select_list)
+```
+
+```elixir
+model_index = Kino.Input.read(target_select)
+model = Enum.at(inputs, model_index)
+```
+
+```elixir
+conversion_chain = ConversionChain.new!(api_key, system_messages, conversion_messages)
+fix_chain = FixChain.new!(api_key)
 ```
 
 ```elixir
 import Kino.Shorts
 
 next = Kino.Control.button("Run Instruction")
-
-stream = Kino.Control.tagged_stream(next: next)
+instruction_status = frame()
+skip = Kino.Control.button("Skip Instruction")
+store = Kino.Control.button("Store Converted Model")
+reload_model = Kino.Control.button("Reload")
 
 old_frame = frame()
 new_frame = frame()
@@ -1052,29 +1265,80 @@ instruction_length = Enum.count(conversion_instructions)
 
 Kino.Frame.render(
   instruction_frame,
-  Kino.Markdown.new("[1/#{instruction_length}] " <> instruction)
+  Kino.Markdown.new("[0/#{instruction_length}] " <> instruction)
 )
 
-model_text = Kino.Input.textarea("Original model", default: model)
+model_text = Kino.Input.textarea("", default: model)
+Kino.Frame.render(new_frame, Kino.Input.textarea("", default: model))
 
-layout =
-  tabs(
-    Conversion:
-      Kino.Layout.grid(
+conversion_layout =
+  Kino.Layout.grid(
+    [
+      target_select,
+      text(""),
+      markdown("### Next LLM instruction"),
+      text(""),
+      instruction_frame,
+      grid([next, skip, instruction_status], columns: 2),
+      markdown("### Previous version"),
+      markdown("### Next LLM input"),
+      old_frame,
+      new_frame
+    ],
+    boxed: true,
+    columns: 2
+  )
+
+import_path = Kino.Input.text("Import Path")
+input_shape = Kino.Input.text("Input Shape")
+input_type = Kino.Input.text("Input Type", default: "f32")
+params_mapping = Kino.Input.textarea("Params Mapping")
+axon_build_args = Kino.Input.text("Axon Build Args")
+flax_model_args = Kino.Input.text("Flax Model Args")
+
+verification_button = Kino.Control.button("Run Verificiation")
+result_status_frame = frame()
+results_frame = frame()
+
+verification_layout =
+  Kino.Layout.grid(
+    [
+      target_select,
+      grid(
         [
-          markdown("### Next LLM instruction"),
-          text(""),
-          instruction_frame,
-          next,
-          markdown("### Most recent version"),
-          markdown("### Next LLM input"),
-          old_frame,
-          new_frame
+          import_path,
+          input_shape,
+          input_type
         ],
         boxed: true,
         columns: 2
       ),
-    Verification: text("verify")
+      params_mapping,
+      grid([axon_build_args, flax_model_args], boxed: true, columns: 2),
+      text(""),
+      text(""),
+      new_frame,
+      grid([verification_button, reload_model], boxed: true, columns: 2),
+      result_status_frame,
+      results_frame
+    ],
+    boxed: true,
+    columns: 2
+  )
+
+layout =
+  tabs(
+    Conversion: conversion_layout,
+    Verification: verification_layout
+  )
+
+stream =
+  Kino.Control.tagged_stream(
+    next: next,
+    skip: skip,
+    store: store,
+    verification: verification_button,
+    reload: reload_model
   )
 
 Kino.nothing()
@@ -1082,40 +1346,145 @@ Kino.nothing()
 
 ```elixir
 Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_input, i} ->
-  instruction = Enum.at(conversion_instructions, i, "return unchanged model")
-  Kino.Frame.render(instruction_frame, Kino.Markdown.new("[#{i}/#{instruction_length}] " <> instruction))
+  case event do
+    {:next, _e} ->
+      instruction = Enum.at(conversion_instructions, i, "return unchanged model")
 
-  old_text = Kino.Input.read(model_input)
-  Kino.Frame.render(old_frame, Kino.Markdown.new(old_text))
+      old_text = Kino.Input.read(model_input)
+      Kino.Frame.render(old_frame, Kino.Markdown.new(old_text))
 
-  new_text = Kino.Input.read(model_input)
-  {:ok, updated_chain, response} =
-    send_user_message.(chain, instruction_message.(instruction, new_text))
+      new_text = Kino.Input.read(model_input)
 
-  new_text_input = Kino.Input.textarea("model_input", default: response.content, monospace: true)
-  Kino.Frame.render(new_frame, new_text_input)
+      Kino.Frame.render(instruction_status, text("Running instruction"))
 
-  i =
-    case event do
-      {:next, _e} -> i + 1
-      {:back, _e} -> i - 1
-    end
+      {:ok, updated_chain, response} =
+        send_user_message.(chain, instruction_message.(instruction, new_text))
 
-  {:cont, {updated_chain, new_text_input, i}}
+      new_text_input =
+        Kino.Input.textarea("model_input", default: response.content, monospace: true)
+
+      Kino.Frame.render(new_frame, new_text_input)
+
+      i = i + 1
+
+      next_instruction = Enum.at(conversion_instructions, i, "return unchanged model")
+
+      Kino.Frame.render(
+        instruction_frame,
+        Kino.Markdown.new("[#{i}/#{instruction_length}] " <> next_instruction)
+      )
+
+      Kino.Frame.render(instruction_status, text("Waiting for instruction"))
+      {:cont, {updated_chain, new_text_input, i}}
+
+    {:skip, _e} ->
+      i = i + 1
+
+      next_instruction = Enum.at(conversion_instructions, i, "return unchanged model")
+
+      Kino.Frame.render(
+        instruction_frame,
+        Kino.Markdown.new("[#{i}/#{instruction_length}] " <> next_instruction)
+      )
+
+      {:cont, {chain, model_input, i}}
+
+    {:store, _e} ->
+      conversion_target = Kino.Input.read(target_select)
+      converted_code = Kino.Input.read(model_input)
+
+      Converted.put(converted, conversion_target, converted_code)
+      {:cont, {chain, model_input, i}}
+
+    {:verification, _e} ->
+      converted_code = Kino.Input.read(model_input)
+      original_code = Kino.Input.read(model_text)
+
+      {flax_name, axon_name} = extract_names.(original_code)
+
+      input_type = Kino.Input.read(input_type) |> String.to_atom()
+      {input_shape, _} = Kino.Input.read(input_shape) |> Code.eval_string()
+
+      {params_mapping, _} = Kino.Input.read(params_mapping) |> Code.eval_string()
+
+      import_path = Kino.Input.read(import_path)
+
+      {axon_build_args, _} = Kino.Input.read(axon_build_args) |> Code.eval_string()
+      flax_model_args = Kino.Input.read(flax_model_args)
+
+      {status, model_code, results} =
+        verify_model.(
+          converted_code,
+          data_dir,
+          flax_name,
+          axon_name,
+          input_shape,
+          input_type,
+          params_mapping,
+          import_path,
+          axon_build_args,
+          flax_model_args,
+          converted
+        )
+
+      Kino.Frame.render(result_status_frame, status)
+
+      failed = Enum.filter(results, fn {_key, value} -> not value.same_result? end)
+      Kino.Frame.render(results_frame, failed)
+
+      new_text_input =
+        Kino.Input.textarea("model_input", default: converted_code, monospace: true)
+
+      Kino.Frame.render(new_frame, new_text_input)
+
+      {:cont, {chain, new_text_input, i}}
+
+    {:reload, _e} ->
+      converted_code = Kino.Input.read(model_input)
+
+      new_text_input =
+        Kino.Input.textarea("model_input", default: converted_code, monospace: true)
+
+      Kino.Frame.render(new_frame, new_text_input)
+
+      {:cont, {chain, new_text_input, i}}
+  end
 end)
 ```
 
+### Amplify the output of the next cell
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
 ```elixir
+Kino.Markdown.new("### Original Model") |> Kino.render()
 Kino.render(model_text)
-layout
+Kino.render(layout)
+Kino.render(grid([text(""), store], columns: 2))
+
+Kino.nothing()
 ```
 
 ```elixir
-converted_model = Kino.Input.read(new_frame)
-  case FixChain.maybe_fix_model(converted_model, fix_chain, 3) do
-    {:ok, model} -> {:ok, model}
-    {:error, model} -> {:conversion_failed, model}
-  end
+Converted.all_to_string(converted) |> IO.puts
 ```
 
-<!-- livebook:{"offset":32171,"stamp":{"token":"XCP.6kLthxEbflapBwEELl6biioeh9KJzkKdCrfVqrlRutZKExf4SkmL6ZHi26G-UsIdPlnhz3G1ljMjs3Dxn_OWbW8heMcFjREiDk4ICNHvral0geAr-g","version":2}} -->
+def flax_res_net_conv_layer(x, out_channels, kernel_size, stride, activation) do
+
+```
+hidden_state = Axon.conv(x,
+    out_channels,
+    kernel_size: kernel_size,
+    strides: stride,
+    padding: [{div(kernel_size, 2), div(kernel_size, 2)}, {div(kernel_size, 2), div(kernel_size, 2)}],
+    use_bias: false,
+    kernel_initializer: Axon.Initializers.variance_scaling(scale: 2.0, mode: :fan_out, distribution: :normal),
+)
+hidden_state = Axon.batch_norm(hidden_state, momentum: 0.9, epsilon: 1.0e-05)
+hidden_state = Axon.activation(hidden_state, activation) 
+hidden_state
+```
+
+end
+
+<!-- livebook:{"offset":41556,"stamp":{"token":"XCP.AqmgXgI9drRWbldbiTHhcU8fHrKAid887-ypuDb7WKQTyiRUm4tl1pHoUW1tepm-PIF0bPLgeLUwJeleoRuII5kqlmlQ3U5wZ8s-Ob1v53049uXhPA","version":2}} -->
