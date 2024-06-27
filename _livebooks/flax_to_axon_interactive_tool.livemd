@@ -940,17 +940,120 @@ defmodule ParamsUtils do
 end
 ```
 
-Must find some way to map params (using LLM?)
+### Params Mapping
 
 ```elixir
-get_param_mapping = fn ->
-  param_mapping = %{
-    "batch_norm_0.beta" => "params.normalization.bias",
-    "batch_norm_0.gamma" => "params.normalization.scale",
-    "batch_norm_0.mean" => "batch_stats.normalization.mean",
-    "batch_norm_0.var" => "batch_stats.normalization.var",
-    "conv_0.kernel" => "params.convolution.kernel"
-  }
+model_string_fn = fn model_code, other_converted ->
+  """
+  defmodule ModelTest do
+  #{model_code}
+
+  #{other_converted}
+  end
+  """
+end
+```
+
+```elixir
+defmodule ParamsMapping do
+  @python python
+
+  def new_chain!(api_key) do
+    {:ok, chain, _response} =
+      %{
+        llm:
+          ChatOpenAI.new!(%{
+            model: "gpt-4o",
+            api_key: api_key,
+            seed: 0
+          })
+      }
+      |> LLMChain.new!()
+      |> LLMChain.add_message(
+        Message.new_system!("You are an expert in Python, Flax, Elixir and Axon.")
+      )
+      |> LLMChain.run()
+
+    chain
+  end
+
+  defp params_mapping_prompt(axon_params, flax_params) do
+    """
+    this is a first set of ids of params of a neural network:
+    #{axon_params}
+
+    this is a second set of ids of params of a neural network:
+    #{flax_params}
+
+    Both sets of ids refer to the same params. Create an Elixir map for the corresponding ids.
+    The keys of the map should be the parameter ids from the first set, the corresponding value should be the id from the second set that belongs to the key 
+    end.
+    Reply ONLY with the Elixir map.
+    """
+  end
+
+  def axon_params(model, input_shape, input_type) do
+    
+    {init_fn, _predict_fn} = Axon.build(model)
+    params = init_fn.(Nx.template(input_shape, input_type), %{})
+
+    ParamsUtils.flatten_keys(params)
+  end
+
+  def flax_params(module, import_path, additional_imports, model_args, input) do
+    python_script =
+      """
+      import jax
+      from typing import Any, Callable, Sequence
+      from jax import random, numpy as jnp
+      import flax
+      from flax import linen as nn
+
+      from functools import partial
+      from typing import Optional, Tuple
+
+      from safetensors import safe_open
+      from safetensors.flax import save_file
+
+      from #{import_path} import #{module}
+
+      #{additional_imports}
+      model = #{module}(#{model_args})
+      key = random.key(0)
+      input = #{input}
+
+      params = model.init(key, input)
+
+
+      def flatten_dict(d, parent_key='', sep='.'):
+          items = []
+          for k, v in d.items():
+              new_key = parent_key + sep + k if parent_key else k
+              if isinstance(v, dict):
+                  items.extend(flatten_dict(v, new_key, sep=sep).items())
+              else:
+                  items.append((new_key, v))
+          return dict(items)
+
+      l = flatten_dict(params)
+      print(list(l.keys()))
+      """
+
+    {params, 0} = System.cmd(@python, ["-c", python_script], [])
+
+    params
+  end
+
+  def params_mapping(chain, axon_params, flax_params) do
+    prompt = params_mapping_prompt(axon_params, flax_params)
+
+    {:ok, _chain, response} =
+      chain
+      |> LLMChain.add_message(Message.new_user!(prompt))
+      |> LLMChain.run()
+
+    response.content
+  end
 end
 ```
 
@@ -970,18 +1073,6 @@ save_params = fn params, param_mapping, axon_params_path, flax_params_path ->
 
   Safetensors.write!(axon_params_path, axon_params)
   Safetensors.write!(flax_params_path, flax_params)
-end
-```
-
-```elixir
-model_string_fn = fn model_code, other_converted ->
-  """
-  defmodule ModelTest do
-  #{model_code}
-
-  #{other_converted}
-  end
-  """
 end
 ```
 
@@ -1024,7 +1115,7 @@ Then in Flax.
 
 ```elixir
 # need path for import, e.g. transformers.models.resnet.modeling_flax_resnet
-run_flax_and_save = fn module, module_args, input_path, output_path, params_path, import_path ->
+run_flax_and_save = fn module, module_args, input_path, output_path, params_path, import_path, additional_imports ->
   test_flax =
     """
     import jax
@@ -1039,9 +1130,9 @@ run_flax_and_save = fn module, module_args, input_path, output_path, params_path
     from safetensors import safe_open
     from safetensors.flax import save_file
 
-    from transformers.models.resnet.configuration_resnet import ResNetConfig
-
     from #{import_path} import #{module}
+
+    #{additional_imports}
 
     def unflatten_dict(d, sep='.'):
       result = {}
@@ -1154,8 +1245,9 @@ verify_model = fn model_code,
                   import_path,
                   axon_build_args,
                   flax_model_args,
-                  converted ->
-  stored_converted = Converted.all_to_string(converted)
+                  converted,
+                  additional_imports ->
+  stored_converted = Converted.code_to_string(converted)
   # build model
   {init_fn, predict_fn} =
     build_model_fn.(model_code, axon_function_name, axon_build_args, stored_converted)
@@ -1180,7 +1272,8 @@ verify_model = fn model_code,
     axon_path,
     flax_path,
     flax_params_path,
-    import_path
+    import_path,
+    additional_imports
   )
 
   # check if results are the same 
@@ -1208,15 +1301,26 @@ defmodule Converted do
     Agent.get(converted, &Map.get(&1, key))
   end
 
-  def put(converted, key, code) do
-    Agent.update(converted, &Map.put(&1, key, code))
+  def put(converted, key, code, params_mapping) do
+    Agent.update(converted, &Map.put(&1, key, %{code: code, params_mapping: params_mapping}))
   end
 
-  def all_to_string(converted) do
+  def code_to_string(converted) do
     converted_funcs = Agent.get(converted, &Map.values(&1))
 
-    Enum.join(converted_funcs, "\n")
+    converted_funcs
+    |> Enum.map(& &1.code)
+    |> Enum.join("\n")
   end
+
+  def params_mapping_to_string(converted) do
+     converted_funcs = Agent.get(converted, &Map.values(&1))
+
+    converted_funcs
+    |> Enum.map(& &1.params_mapping)
+    |> Enum.join("\n")
+  end
+  
 end
 
 {:ok, converted} = Converted.start_link()
@@ -1244,6 +1348,7 @@ model = Enum.at(inputs, model_index)
 ```elixir
 conversion_chain = ConversionChain.new!(api_key, system_messages, conversion_messages)
 fix_chain = FixChain.new!(api_key)
+params_mapping_chain = ParamsMapping.new_chain!(api_key)
 ```
 
 ```elixir
@@ -1290,9 +1395,16 @@ conversion_layout =
   )
 
 import_path = Kino.Input.text("Import Path")
+additional_imports = Kino.Input.text("Additional Imports")
 input_shape = Kino.Input.text("Input Shape")
 input_type = Kino.Input.text("Input Type", default: "f32")
+
+
 params_mapping = Kino.Input.textarea("Params Mapping")
+generate_params_mapping = Kino.Control.button("Generate Params Mapping")
+params_mapping_frame = frame()
+Kino.Frame.render(params_mapping_frame, params_mapping)
+
 axon_build_args = Kino.Input.text("Axon Build Args")
 flax_model_args = Kino.Input.text("Flax Model Args")
 
@@ -1307,13 +1419,14 @@ verification_layout =
       grid(
         [
           import_path,
+          additional_imports,
           input_shape,
           input_type
         ],
         boxed: true,
         columns: 2
       ),
-      params_mapping,
+      grid([params_mapping_frame, generate_params_mapping], columns: 2),
       grid([axon_build_args, flax_model_args], boxed: true, columns: 2),
       text(""),
       text(""),
@@ -1338,14 +1451,17 @@ stream =
     skip: skip,
     store: store,
     verification: verification_button,
-    reload: reload_model
+    reload: reload_model,
+    gen_params_mapping: generate_params_mapping
   )
 
 Kino.nothing()
 ```
 
 ```elixir
-Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_input, i} ->
+Kino.listen(stream, {conversion_chain, model_text, params_mapping, 0}, fn event,
+                                                                          {chain, model_input,
+                                                                           params_map, i} ->
   case event do
     {:next, _e} ->
       instruction = Enum.at(conversion_instructions, i, "return unchanged model")
@@ -1375,7 +1491,7 @@ Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_i
       )
 
       Kino.Frame.render(instruction_status, text("Waiting for instruction"))
-      {:cont, {updated_chain, new_text_input, i}}
+      {:cont, {updated_chain, new_text_input, params_map, i}}
 
     {:skip, _e} ->
       i = i + 1
@@ -1387,14 +1503,16 @@ Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_i
         Kino.Markdown.new("[#{i}/#{instruction_length}] " <> next_instruction)
       )
 
-      {:cont, {chain, model_input, i}}
+      {:cont, {chain, model_input, params_map, i}}
 
     {:store, _e} ->
       conversion_target = Kino.Input.read(target_select)
       converted_code = Kino.Input.read(model_input)
 
-      Converted.put(converted, conversion_target, converted_code)
-      {:cont, {chain, model_input, i}}
+      params_mapping = Kino.Input.read(params_map)
+
+      Converted.put(converted, conversion_target, converted_code, params_mapping)
+      {:cont, {chain, model_input, params_map, i}}
 
     {:verification, _e} ->
       converted_code = Kino.Input.read(model_input)
@@ -1405,14 +1523,15 @@ Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_i
       input_type = Kino.Input.read(input_type) |> String.to_atom()
       {input_shape, _} = Kino.Input.read(input_shape) |> Code.eval_string()
 
-      {params_mapping, _} = Kino.Input.read(params_mapping) |> Code.eval_string()
+      {params_mapping, _} = Kino.Input.read(params_map) |> Code.eval_string()
 
       import_path = Kino.Input.read(import_path)
+      additional_imports = Kino.Input.read(additional_imports)
 
       {axon_build_args, _} = Kino.Input.read(axon_build_args) |> Code.eval_string()
       flax_model_args = Kino.Input.read(flax_model_args)
 
-      {status, model_code, results} =
+      {status, _model_code, results} =
         verify_model.(
           converted_code,
           data_dir,
@@ -1424,7 +1543,8 @@ Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_i
           import_path,
           axon_build_args,
           flax_model_args,
-          converted
+          converted,
+          additional_imports
         )
 
       Kino.Frame.render(result_status_frame, status)
@@ -1437,7 +1557,7 @@ Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_i
 
       Kino.Frame.render(new_frame, new_text_input)
 
-      {:cont, {chain, new_text_input, i}}
+      {:cont, {chain, new_text_input, params_map, i}}
 
     {:reload, _e} ->
       converted_code = Kino.Input.read(model_input)
@@ -1447,7 +1567,63 @@ Kino.listen(stream, {conversion_chain, model_text, 0}, fn event, {chain, model_i
 
       Kino.Frame.render(new_frame, new_text_input)
 
-      {:cont, {chain, new_text_input, i}}
+      {:cont, {chain, new_text_input, params_map, i}}
+
+    {:gen_params_mapping, _e} ->
+      converted_code = Kino.Input.read(model_input)
+      original_code = Kino.Input.read(model_text)
+
+      {flax_name, axon_name} = extract_names.(original_code)
+
+      input_type = Kino.Input.read(input_type) |> String.to_atom()
+      {input_shape, _} = Kino.Input.read(input_shape) |> Code.eval_string()
+
+      import_path = Kino.Input.read(import_path)
+      additional_imports = Kino.Input.read(additional_imports)
+
+      {axon_build_args, _} = Kino.Input.read(axon_build_args) |> Code.eval_string()
+      flax_model_args = Kino.Input.read(flax_model_args)
+
+      other_converted = Converted.code_to_string(converted)
+
+      model =
+        """
+        defmodule ModelTest do
+        #{converted_code}
+
+        #{other_converted}
+        end
+        """
+
+      Code.eval_string(model, [], __ENV__)
+
+      model = apply(ModelTest, String.to_atom(axon_name), axon_build_args)
+
+      axon_params =
+        ParamsMapping.axon_params(
+          model,
+          input_shape,
+          input_type
+        )
+
+      flax_input = "jnp.array([[[1, 2, 3]]])"
+      flax_params =
+        ParamsMapping.flax_params(
+          flax_name,
+          import_path,
+          additional_imports,
+          flax_model_args,
+          flax_input
+        )
+
+      params_mapping =
+        ParamsMapping.params_mapping(params_mapping_chain, axon_params, flax_params)
+
+      new_params_map = Kino.Input.textarea("Params Mapping", default: params_mapping)
+      Kino.Frame.render(params_mapping_frame, new_params_map)
+
+      # update frame
+      {:cont, {chain, model_input, new_params_map, i}}
   end
 end)
 ```
@@ -1466,25 +1642,7 @@ Kino.nothing()
 ```
 
 ```elixir
-Converted.all_to_string(converted) |> IO.puts
+Converted.code_to_string(converted) |> IO.puts
 ```
 
-def flax_res_net_conv_layer(x, out_channels, kernel_size, stride, activation) do
-
-```
-hidden_state = Axon.conv(x,
-    out_channels,
-    kernel_size: kernel_size,
-    strides: stride,
-    padding: [{div(kernel_size, 2), div(kernel_size, 2)}, {div(kernel_size, 2), div(kernel_size, 2)}],
-    use_bias: false,
-    kernel_initializer: Axon.Initializers.variance_scaling(scale: 2.0, mode: :fan_out, distribution: :normal),
-)
-hidden_state = Axon.batch_norm(hidden_state, momentum: 0.9, epsilon: 1.0e-05)
-hidden_state = Axon.activation(hidden_state, activation) 
-hidden_state
-```
-
-end
-
-<!-- livebook:{"offset":41556,"stamp":{"token":"XCP.AqmgXgI9drRWbldbiTHhcU8fHrKAid887-ypuDb7WKQTyiRUm4tl1pHoUW1tepm-PIF0bPLgeLUwJeleoRuII5kqlmlQ3U5wZ8s-Ob1v53049uXhPA","version":2}} -->
+<!-- livebook:{"offset":45993,"stamp":{"token":"XCP.O9n6CrTUJ8jM6icHJIE7AFUNKhHHeTN21RmFW8Baxv7hJYoaclz7bSseQt0mJNr7DD5dZfDnxtRR8rIqwfGxJmDdFNN0lcI90jH_HszNfTh_uJF0Xg","version":2}} -->
