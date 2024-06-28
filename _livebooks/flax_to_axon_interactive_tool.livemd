@@ -121,21 +121,6 @@ flowchart TD
     verify-->Store
 ```
 
-```elixir
-transformers_path = Path.join(venv_dir, "lib/python3.11/site-packages/transformers")
-resnet_flax_path = Path.join(transformers_path, "models/resnet/modeling_flax_resnet.py")
-
-{:ok, resnet_input} = File.read(resnet_flax_path)
-```
-
-```elixir
-resnet_flax_path
-```
-
-```elixir
-input = resnet_input
-```
-
 ## Get inputs
 
 We read a Python file which contains the model code. Then we get all top level definitions from the file.
@@ -961,7 +946,7 @@ defmodule FixChain do
 end
 ````
 
-## Verify
+## Verification
 
 ### Check that Python installation works
 
@@ -1341,39 +1326,56 @@ defmodule ParamsMapping do
 end
 ```
 
-## Run it all
+## Global Definitions
 
 ```elixir
 {:ok, converted} = Conversion.start_link()
+
+conversion_chain = Conversion.new_chain!(api_key, system_messages ++ conversion_messages)
+fix_chain = FixChain.new!(api_key)
+params_mapping_chain = ParamsMapping.new_chain!(api_key)
+
+Kino.nothing()
+```
+
+## Interactive Tool
+
+```elixir
+input_file = Kino.Input.file("Flax File")
 ```
 
 ```elixir
-inputs = Utils.top_level_defs(input) 
+i = Kino.Input.read(input_file)
 
-select_list = for {input, index} <- Enum.with_index(inputs) do
-  [label | _] = String.split(input, "(")
-  {index, label}
-end
+input =
+  case i do
+    %{file_ref: file_ref} -> Kino.Input.file_path(file_ref) |> File.read!()
+    nil -> ""
+  end
 
-```
+inputs = Utils.top_level_defs(input)
 
-```elixir
+select_list =
+  for {input, index} <- Enum.with_index(inputs) do
+    [label | _] = String.split(input, "(")
+    {index, label}
+  end
+
+select_list =
+  if Enum.empty?(select_list) do
+    [{0, "No Flax Input"}]
+  else
+    select_list
+  end
+
 target_select = Kino.Input.select("Conversion Target", select_list)
 ```
 
 ```elixir
+import Kino.Shorts
+
 model_index = Kino.Input.read(target_select)
 model = Enum.at(inputs, model_index)
-```
-
-```elixir
-conversion_chain = Conversion.new_chain!(api_key, system_messages ++ conversion_messages)
-fix_chain = FixChain.new!(api_key)
-params_mapping_chain = ParamsMapping.new_chain!(api_key)
-```
-
-```elixir
-import Kino.Shorts
 
 next = Kino.Control.button("Run Instruction")
 instruction_status = frame()
@@ -1400,8 +1402,6 @@ Kino.Frame.render(current_model_frame, model_text)
 conversion_layout =
   grid(
     [
-      target_select,
-      text(""),
       markdown("### Next LLM instruction"),
       text(""),
       instruction_frame,
@@ -1435,19 +1435,19 @@ results_frame = frame()
 verification_layout =
   grid(
     [
-      target_select,
+      grid([params_mapping_frame, generate_params_mapping], boxed: true, columns: 2),
       grid(
         [
           import_path,
           additional_imports,
           input_shape,
-          input_type
+          input_type,
+          axon_build_args,
+          flax_model_args
         ],
         boxed: true,
         columns: 2
       ),
-      grid([params_mapping_frame, generate_params_mapping], boxed: true, columns: 2),
-      grid([axon_build_args, flax_model_args], boxed: true, columns: 2),
       text(""),
       text(""),
       current_model_frame,
@@ -1477,6 +1477,9 @@ converted_layout =
 
 layout =
   grid([
+    grid([markdown("### Input File"), input_file]),
+    target_select,
+    text(""),
     markdown("### Original Model"),
     model_text,
     tabs(
@@ -1702,4 +1705,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":48493,"stamp":{"token":"XCP.F6fmcPqSvWbWjhRqujWKI5TDEjkVv52Ptu0CP1IystzIJnlsLzACwNiC48OHf-cdvG2rhLl0wrWKA9SjEYoqDVL2glcZvutYu56PI2owT0FN5Sogbg","version":2}} -->
+<!-- livebook:{"offset":48519,"stamp":{"token":"XCP.r7ARrBTN1nxYdpzEdHbn79Gr9Slo5XLddur29QLQ5XO4Ph9FQJYlwtKepx3PMTd2Kaczr1YHhczj_na-0bXkl2X2njMaHlCzlgUo9OwPajTo5Zq5Zw","version":2}} -->
