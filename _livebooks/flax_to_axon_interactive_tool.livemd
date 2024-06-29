@@ -1253,7 +1253,18 @@ defmodule ParamsMapping do
     ParamsUtils.flatten_keys(params)
   end
 
-  def flax_params(module, import_path, additional_imports, model_args, input) do
+  defp elixir_tuple_to_python_string(tuple) do
+    for num <- Tuple.to_list(tuple), into: "(" do
+      "#{num}, "
+    end
+    |> String.replace_trailing(", ", ")")
+  end
+
+  def flax_params(module, import_path, additional_imports, model_args, input_shape) do
+    flax_shape = elixir_tuple_to_python_string(input_shape)
+
+    input = "jnp.broadcast_to(1, #{flax_shape})"
+
     python_script =
       """
       import jax
@@ -1652,15 +1663,13 @@ Kino.listen(
             input_type
           )
 
-        flax_input = "jnp.array([[[1, 2, 3]]])"
-
         flax_params =
           ParamsMapping.flax_params(
             flax_name,
             import_path,
             additional_imports,
             flax_model_args,
-            flax_input
+            input_shape
           )
 
         params_mapping =
@@ -1685,4 +1694,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":48234,"stamp":{"token":"XCP.W3MBNYTHNlhX8hC2aEovwF8Em_zsURwCN385XDfOrNCdldDU58MSnX9Wqc8_VHZKNgKQe8_DC-y0VJadVsfCFke6SZ1LKIzEZbdgtebADWxot3aLsw","version":2}} -->
+<!-- livebook:{"offset":48474,"stamp":{"token":"XCP.MfLA1juX_pp4Ji0GoBImeVP6Gco26S2KJNWhP7cq1tqcjOAZz-5vZeTG7GpsWqyhipAiK-VwAawvGRZJbttwKIh78EpXQmXuIB8Jg61TKw928mBiOw","version":2}} -->
