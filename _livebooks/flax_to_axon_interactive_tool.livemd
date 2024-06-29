@@ -1317,9 +1317,9 @@ Kino.Frame.render(
   markdown("[0/#{num_instructions}] #{first_instruction}")
 )
 
-model_text = Kino.Input.textarea("Model Code", default: model, monospace: true)
+original_model_text = Kino.Input.textarea("Model Code", default: model, monospace: true)
 Kino.Frame.render(previous_model_frame, text("No previous model yet"))
-Kino.Frame.render(current_model_frame, model_text)
+Kino.Frame.render(current_model_frame, original_model_text)
 
 conversion_layout =
   grid(
@@ -1412,7 +1412,7 @@ layout =
     target_select,
     text(""),
     markdown("### Original Model"),
-    model_text,
+    markdown("```python\n#{model}\n```"),
     tabs(
       Conversion: conversion_layout,
       Verification: verification_layout
@@ -1436,7 +1436,7 @@ Kino.nothing()
 ````elixir
 Kino.listen(
   stream,
-  {conversion_chain, model_text, params_mapping, 0},
+  {conversion_chain, original_model_text, params_mapping, 0},
   fn event, {chain, model_input, params_map, instruction_index} ->
     case event do
       {:next, _e} ->
@@ -1498,7 +1498,7 @@ Kino.listen(
 
       {:verify, _e} ->
         converted_code = Kino.Input.read(model_input)
-        original_code = Kino.Input.read(model_text)
+        original_code = Kino.Input.read(original_model_text)
 
         {flax_name, axon_name} = Utils.extract_names(original_code)
 
@@ -1570,7 +1570,7 @@ Kino.listen(
 
       {:gen_params_mapping, _e} ->
         converted_code = Kino.Input.read(model_input)
-        original_code = Kino.Input.read(model_text)
+        original_code = Kino.Input.read(original_model_text)
 
         {flax_name, axon_name} = Utils.extract_names(original_code)
 
@@ -1628,4 +1628,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":47010,"stamp":{"token":"XCP.U2al7pOHayT09eN4YQEO-MiaminSwDJ3M5qYUcLGGvfDnh0OXqrYy2VvC053HaujHzlkutPF2Jo0t5a1vxsGAGuH2QMISIw2T_D247pskzEbZhNN8w","version":2}} -->
+<!-- livebook:{"offset":47081,"stamp":{"token":"XCP.D4nYho3b8mjhstyTMfvCYsym8fthdGuotMHP4radG74l0ZyhsiW9vJ9P1-cyQRN5PHYgzrWda7gm4Inqlgu7XAge2oX-e4jddRvSzcZRLlV3JeTFVA","version":2}} -->
