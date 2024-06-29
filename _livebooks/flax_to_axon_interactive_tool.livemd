@@ -746,8 +746,6 @@ conversion_instructions = [
 
 ## Conversion - Code
 
-Define the langchain
-
 ```elixir
 defmodule Conversion do
   use Agent
@@ -758,15 +756,15 @@ defmodule Conversion do
   @instructions conversion_instructions
   @no_op_instruction "return unchanged code"
 
-  def conversion_instruction(index) do
-    num_instructions = length(@instructions)
+  def num_instructions, do: length(@instructions)
 
-    if index < num_instructions do
+  def conversion_instruction(index) do
+    if index < num_instructions() do
       instruction = Enum.at(@instructions, index)
       next_index = index + 1
-      {instruction, next_index, num_instructions}
+      {instruction, next_index}
     else
-      {@no_op_instruction, index, num_instructions}
+      {@no_op_instruction, index}
     end
   end
 
@@ -790,7 +788,7 @@ defmodule Conversion do
     |> Enum.join("\n")
   end
 
-  def params_mapping_to_string(converted) do
+  def params_mappings_to_string(converted) do
     converted_funcs = Agent.get(converted, &Map.values(&1))
 
     converted_funcs
@@ -817,13 +815,13 @@ defmodule Conversion do
     chain
   end
 
-  def send_user_message(chain, message) do
+  defp send_user_message(chain, message) do
     chain
     |> LLMChain.add_message(Message.new_user!(message))
     |> LLMChain.run()
   end
 
-  def instruction_message(model_code, instruction) do
+  defp instruction_message(model_code, instruction) do
     """
     INSTRUCTION: #{instruction}
     MODEL:
@@ -834,46 +832,46 @@ defmodule Conversion do
   def update_model(model_code, chain, instruction) do
     message = instruction_message(model_code, instruction)
 
-    {:ok, chain, response} = send_user_message(chain, message)
-
-    {:ok, chain, response.content}
+    case send_user_message(chain, message) do
+      {:ok, updated_chain, response} -> {:ok, updated_chain, response.content}
+      {:error, _chain, _response} -> {:error, chain, model_code}
+    end
   end
 end
 ```
 
 ```elixir
 defmodule Model do
-  def apply_model_fn(module_name, model_fn_name, args) do
+  def apply_model(module_name, model_fn_name, args) do
     apply(module_name, String.to_atom(model_fn_name), args)
   end
 
-  def model_string_fn(model_code, other_converted) do
+  def model_string(model_code, module_name, additional_code) do
     """
-    defmodule ModelTest do
+    defmodule #{module_name} do
     #{model_code}
 
-    #{other_converted}
+    #{additional_code}
     end
     """
   end
 
-  def build_model_fn(model_code, axon_function_name, build_args, other_converted) do
-    model = model_string_fn(model_code, other_converted)
+  def build_model(model_code, axon_function_name, build_args, additional_code) do
+    model = model_string(model_code, "ModelTest", additional_code)
     Code.eval_string(model, [], __ENV__)
 
-    model = apply_model_fn(ModelTest, axon_function_name, build_args)
+    model = apply_model(Model.ModelTest, axon_function_name, build_args)
 
     Axon.build(model)
   end
 
   def get_params(init_fn, input_shape, input_type) do
-    # get input_shape and input_type
     init_fn.(Nx.template(input_shape, input_type), %{})
   end
 end
 ```
 
-### Extra chain for fixing general Elixir issues at the end
+### Extra chain for fixing general Elixir issues
 
 ````elixir
 defmodule FixChain do
@@ -991,16 +989,6 @@ defmodule Verification do
     Safetensors.write!(flax_params_path, flax_params)
   end
 
-  def model_string_fn(model_code, other_converted) do
-    """
-    defmodule ModelTest do
-    #{model_code}
-
-    #{other_converted}
-    end
-    """
-  end
-
   def run_axon_and_save(predict_fn, params, input_shape, path) do
     input_data =
       for dim <- Enum.reverse(Tuple.to_list(input_shape)), reduce: StreamData.float() do
@@ -1038,7 +1026,7 @@ defmodule Verification do
         import_path,
         additional_imports
       ) do
-    test_flax =
+    flax_script =
       """
       import jax
       from typing import Any, Callable, Sequence
@@ -1095,10 +1083,10 @@ defmodule Verification do
       save_file(out_tensors, "#{output_path}")
       """
 
-    run_python(test_flax, [])
+    run_python(flax_script, [])
   end
 
-  def assert_all_close(left, right) do
+  defp assert_all_close(left, right) do
     atol = 1.0e-4
     rtol = 1.0e-4
 
@@ -1110,7 +1098,7 @@ defmodule Verification do
     equals == Nx.tensor(1, type: :u8, backend: Nx.BinaryBackend)
   end
 
-  def same_result?(axon_result, flax_result) do
+  defp same_result?(axon_result, flax_result) do
     assert_all_close(axon_result, flax_result)
   end
 
@@ -1134,9 +1122,8 @@ defmodule Verification do
   end
 
   def verify_model(axon_model, flax_model, params_mapping) do
-    # build model
     {init_fn, predict_fn} =
-      Model.build_model_fn(
+      Model.build_model(
         axon_model.code,
         axon_model.name,
         axon_model.build_args,
@@ -1145,13 +1132,10 @@ defmodule Verification do
 
     params = Model.get_params(init_fn, axon_model.input_shape, axon_model.input_type)
 
-    # save params
     save_params(params, params_mapping, axon_model.params_path, flax_model.params_path)
 
-    # run axon, save data
     run_axon_and_save(predict_fn, params, axon_model.input_shape, axon_model.results_path)
 
-    # run flax, save data  
     run_flax_and_save(
       flax_model.name,
       flax_model.model_args,
@@ -1166,9 +1150,9 @@ defmodule Verification do
     results = verification_results(axon_model.results_path, flax_model.results_path)
 
     if Enum.all?(results, fn {_k, res} -> res.same_result? end) do
-      {:ok, axon_model.code, results}
+      {:ok, results}
     else
-      {:verification_failed, axon_model.code, results}
+      {:verification_failed, results}
     end
   end
 end
@@ -1388,7 +1372,8 @@ current_model_frame = frame()
 
 instruction_frame = frame()
 
-{first_instruction, _, num_instructions} = Conversion.conversion_instruction(0)
+{first_instruction, _} = Conversion.conversion_instruction(0)
+num_instructions = Conversion.num_instructions()
 
 Kino.Frame.render(
   instruction_frame,
@@ -1435,7 +1420,10 @@ results_frame = frame()
 verification_layout =
   grid(
     [
-      grid([params_mapping_frame, generate_params_mapping], boxed: true, columns: 2),
+      current_model_frame,
+      reload_model,
+      params_mapping_frame,
+      generate_params_mapping,
       grid(
         [
           import_path,
@@ -1448,17 +1436,15 @@ verification_layout =
         boxed: true,
         columns: 2
       ),
-      text(""),
-      text(""),
-      current_model_frame,
-      grid([verify, reload_model], boxed: true, columns: 2),
+      verify,
       markdown("### Verification Status"),
       markdown("### Verification Results"),
       result_status_frame,
       results_frame
     ],
     boxed: true,
-    columns: 2
+    columns: 2,
+    gap: 16
   )
 
 converted_frame = frame()
@@ -1509,7 +1495,7 @@ Kino.listen(
   fn event, {chain, model_input, params_map, instruction_index} ->
     case event do
       {:next, _e} ->
-        {instruction, next_index, num_instructions} =
+        {instruction, next_index} =
           Conversion.conversion_instruction(instruction_index)
 
         model_code = Kino.Input.read(model_input)
@@ -1525,7 +1511,7 @@ Kino.listen(
 
         Kino.Frame.render(current_model_frame, model_input)
 
-        {next_instruction, _, _} = Conversion.conversion_instruction(next_index)
+        {next_instruction, _} = Conversion.conversion_instruction(next_index)
 
         Kino.Frame.render(
           instruction_frame,
@@ -1537,7 +1523,7 @@ Kino.listen(
         {:cont, {updated_chain, model_input, params_map, next_index}}
 
       {:skip, _e} ->
-        {next_instruction, next_index, num_instructions} =
+        {next_instruction, next_index} =
           Conversion.conversion_instruction(instruction_index)
 
         Kino.Frame.render(
@@ -1654,18 +1640,10 @@ Kino.listen(
 
         previously_converted = Conversion.code_to_string(converted)
 
-        model =
-          """
-          defmodule ModelTest do
-          #{converted_code}
+        Model.build_model(converted_code, axon_name, axon_build_args, previously_converted)
 
-          #{previously_converted}
-          end
-          """
-
-        Code.eval_string(model, [], __ENV__)
-
-        model = apply(ModelTest, String.to_atom(axon_name), axon_build_args)
+        model = Model.apply_model(ModelTest, axon_name, axon_build_args)
+        # apply(ModelTest, String.to_atom(axon_name), axon_build_args)
 
         axon_params =
           ParamsMapping.axon_params(
@@ -1687,6 +1665,8 @@ Kino.listen(
 
         params_mapping =
           ParamsMapping.params_mapping(params_mapping_chain, axon_params, flax_params)
+          |> String.trim_leading("```elixir")
+          |> String.trim_trailing("```")
 
         new_params_map = Kino.Input.textarea("Params Mapping", default: params_mapping)
         Kino.Frame.render(params_mapping_frame, new_params_map)
@@ -1705,4 +1685,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":48519,"stamp":{"token":"XCP.r7ARrBTN1nxYdpzEdHbn79Gr9Slo5XLddur29QLQ5XO4Ph9FQJYlwtKepx3PMTd2Kaczr1YHhczj_na-0bXkl2X2njMaHlCzlgUo9OwPajTo5Zq5Zw","version":2}} -->
+<!-- livebook:{"offset":48234,"stamp":{"token":"XCP.W3MBNYTHNlhX8hC2aEovwF8Em_zsURwCN385XDfOrNCdldDU58MSnX9Wqc8_VHZKNgKQe8_DC-y0VJadVsfCFke6SZ1LKIzEZbdgtebADWxot3aLsw","version":2}} -->
