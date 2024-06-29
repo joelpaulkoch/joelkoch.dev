@@ -871,79 +871,6 @@ defmodule Model do
 end
 ```
 
-### Extra chain for fixing general Elixir issues
-
-````elixir
-defmodule FixChain do
-  alias LangChain.Message
-  alias LangChain.Chains.LLMChain
-  alias LangChain.ChatModels.ChatOpenAI
-
-  def new!(api_key) do
-    {:ok, chain, _response} =
-      %{
-        llm:
-          ChatOpenAI.new!(%{
-            model: "gpt-4o",
-            api_key: api_key,
-            seed: 0
-          })
-      }
-      |> LLMChain.new!()
-      |> LLMChain.add_message(
-        Message.new_system!("You are an expert in Python, Flax, Elixir and Axon.")
-      )
-      |> LLMChain.run()
-
-    chain
-  end
-
-  defp fix_instruction(code) do
-    """
-    Fix this Elixir code according to the error message.
-    Reply ONLY with the modified Elixir code.
-    If you don't modify anything reply with the unchanged code.
-    #{code}
-    """
-  end
-
-  def fix_model(chain, model) do
-    fix_instruction = fix_instruction(model)
-
-    {:ok, _chain, response} =
-      chain
-      |> LLMChain.add_message(Message.new_user!(fix_instruction))
-      |> LLMChain.run()
-
-    response.content
-  end
-
-  def maybe_fix_model(model, chain, retries) do
-    if retries == 0 do
-      {:error, model}
-    else
-      dbg("trying to fix #{retries}")
-
-      model =
-        model
-        |> String.trim_leading("```elixir")
-        |> String.trim_trailing("```")
-
-      dbg(model)
-
-      try do
-        ## check that it's valid code 
-        Code.eval_string(model, [], __ENV__)
-      rescue
-        _ -> fix_model(chain, model) |> maybe_fix_model(chain, retries - 1)
-      else
-        _ -> {:ok, model}
-      end
-    end
-  end
-end
-````
-
 ## Verification
 
 ### Check that Python installation works
@@ -1327,7 +1254,6 @@ end
 {:ok, converted} = Conversion.start_link()
 
 conversion_chain = Conversion.new_chain!(api_key, system_messages ++ conversion_messages)
-fix_chain = FixChain.new!(api_key)
 params_mapping_chain = ParamsMapping.new_chain!(api_key)
 
 Kino.nothing()
@@ -1366,7 +1292,7 @@ select_list =
 target_select = Kino.Input.select("Conversion Target", select_list)
 ```
 
-```elixir
+````elixir
 import Kino.Shorts
 
 model_index = Kino.Input.read(target_select)
@@ -1460,6 +1386,14 @@ verification_layout =
 
 converted_frame = frame()
 
+converted_code_md = """
+```elixir
+#{Conversion.code_to_string(converted)}
+```
+"""
+
+Kino.Frame.render(converted_frame, markdown(converted_code_md))
+
 converted_layout =
   grid(
     [
@@ -1497,7 +1431,7 @@ stream =
   )
 
 Kino.nothing()
-```
+````
 
 ````elixir
 Kino.listen(
@@ -1694,4 +1628,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":48474,"stamp":{"token":"XCP.MfLA1juX_pp4Ji0GoBImeVP6Gco26S2KJNWhP7cq1tqcjOAZz-5vZeTG7GpsWqyhipAiK-VwAawvGRZJbttwKIh78EpXQmXuIB8Jg61TKw928mBiOw","version":2}} -->
+<!-- livebook:{"offset":47010,"stamp":{"token":"XCP.U2al7pOHayT09eN4YQEO-MiaminSwDJ3M5qYUcLGGvfDnh0OXqrYy2VvC053HaujHzlkutPF2Jo0t5a1vxsGAGuH2QMISIw2T_D247pskzEbZhNN8w","version":2}} -->
