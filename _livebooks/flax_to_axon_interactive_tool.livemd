@@ -1587,7 +1587,7 @@ Kino.listen(
 
         Model.build_model(converted_code, axon_name, axon_build_args, previously_converted)
 
-        model = Model.apply_model(ModelTest, axon_name, axon_build_args)
+        model = Model.apply_model(Model.ModelTest, axon_name, axon_build_args)
         # apply(ModelTest, String.to_atom(axon_name), axon_build_args)
 
         axon_params =
@@ -1628,4 +1628,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":47081,"stamp":{"token":"XCP.D4nYho3b8mjhstyTMfvCYsym8fthdGuotMHP4radG74l0ZyhsiW9vJ9P1-cyQRN5PHYgzrWda7gm4Inqlgu7XAge2oX-e4jddRvSzcZRLlV3JeTFVA","version":2}} -->
+<!-- livebook:{"offset":47087,"stamp":{"token":"XCP.BWjE4SaaBHdf3VMtX9hLIOsofMyNiPC_ldnwvOZDQi4CbRSoiD5it9wW0RUDJuEbzWTN-TQI6_y7RhGl6Xda1XnxkkbsraGcWlMKZjST242ndMITKg","version":2}} -->
