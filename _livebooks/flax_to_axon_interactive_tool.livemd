@@ -785,7 +785,7 @@ defmodule Conversion do
 
     converted_funcs
     |> Enum.map(& &1.code)
-    |> Enum.join("\n")
+    |> Enum.join("\n\n")
   end
 
   def params_mappings_to_string(converted) do
@@ -1180,15 +1180,12 @@ defmodule ParamsMapping do
     ParamsUtils.flatten_keys(params)
   end
 
-  defp elixir_tuple_to_python_string(tuple) do
-    for num <- Tuple.to_list(tuple), into: "(" do
-      "#{num}, "
-    end
-    |> String.replace_trailing(", ", ")")
-  end
-
   def flax_params(module, import_path, additional_imports, model_args, input_shape) do
-    flax_shape = elixir_tuple_to_python_string(input_shape)
+    flax_shape =
+      for num <- Tuple.to_list(input_shape), into: "(" do
+        "#{num}, "
+      end
+      |> String.replace_trailing(", ", ")")
 
     input = "jnp.broadcast_to(1, #{flax_shape})"
 
@@ -1248,7 +1245,7 @@ defmodule ParamsMapping do
 end
 ```
 
-## Global Definitions
+## Interactive Tool - Global Definitions
 
 ```elixir
 {:ok, converted} = Conversion.start_link()
@@ -1259,7 +1256,7 @@ params_mapping_chain = ParamsMapping.new_chain!(api_key)
 Kino.nothing()
 ```
 
-## Interactive Tool
+## Interactive Tool - Setup
 
 ```elixir
 input_file = Kino.Input.file("Flax File")
@@ -1347,10 +1344,10 @@ generate_params_mapping = Kino.Control.button("Generate Params Mapping")
 params_mapping_frame = frame()
 Kino.Frame.render(params_mapping_frame, params_mapping)
 
-axon_build_args = Kino.Input.text("Axon Build Args", default: "[Axon.input(\"in\"), 1, 2]")
-flax_model_args = Kino.Input.text("Flax Model Args", default: "3, 5")
+axon_build_args = Kino.Input.text("Axon Build Args (function inputs)", default: "[Axon.input(\"in\"), 1, 2]")
+flax_model_args = Kino.Input.text("Flax Model Args (model attributes)", default: "3, 5")
 
-verify = Kino.Control.button("Run Verificiation")
+verify = Kino.Control.button("Run Verification")
 result_status_frame = frame()
 results_frame = frame()
 
@@ -1375,7 +1372,7 @@ verification_layout =
       ),
       verify,
       markdown("### Verification Status"),
-      markdown("### Verification Results"),
+      markdown("### Failed Verification Results"),
       result_status_frame,
       results_frame
     ],
@@ -1408,7 +1405,7 @@ converted_layout =
 
 layout =
   grid([
-    grid([markdown("### Input File"), input_file]),
+    grid([markdown("### Select Input File"), input_file]),
     target_select,
     text(""),
     markdown("### Original Model"),
@@ -1620,6 +1617,8 @@ Kino.listen(
 )
 ````
 
+## Interactive Tool - UI
+
 ### Amplify the output of the next cell
 
 <!-- livebook:{"reevaluate_automatically":true} -->
@@ -1628,4 +1627,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":47087,"stamp":{"token":"XCP.BWjE4SaaBHdf3VMtX9hLIOsofMyNiPC_ldnwvOZDQi4CbRSoiD5it9wW0RUDJuEbzWTN-TQI6_y7RhGl6Xda1XnxkkbsraGcWlMKZjST242ndMITKg","version":2}} -->
+<!-- livebook:{"offset":47109,"stamp":{"token":"XCP.jNZ6w8-Ldxu8kjpk2uqFxOdixnunfGBCgSnqaESa3d9DVS65QqPZJLG5xaLkSfmo1RY_vuACueuNHmeCwuewSgPNmNN8nqGjXGyoGn1OE82uYedvbA","version":2}} -->
