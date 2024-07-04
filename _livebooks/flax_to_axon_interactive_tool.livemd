@@ -50,7 +50,7 @@ python_packages =
     jaxlib
   )
 
-venv_dir = Path.join(__DIR__, "flax2axon_env")
+venv_dir = Path.join(__DIR__, "flax_to_axon_env")
 {_, 0} = System.cmd(asdf_python, ["-m", "venv", "--copies", venv_dir])
 
 python = Path.join([venv_dir, "bin", "python"])
@@ -76,7 +76,7 @@ unless File.exists?(data_dir), do: :ok = File.mkdir(data_dir)
 
 ## Introduction
 
-You must set the `OPENAI_KEY` secret to your api key.
+You can configure the LLM provider and model here. For OpenAI, you must set the `OPENAI_KEY` secret to your api key.
 
 ```elixir
 api_key = System.get_env("LB_OPENAI_KEY")
@@ -1007,10 +1007,10 @@ defmodule Verification do
       for input_key in input_keys:  
         input = tensors[input_key]
 
-        (output, _) = model.apply(params, input)
+        output = model.apply(params, input)
         output_key = input_key.replace("input", "output")
 
-        out_tensors[output_key] = output
+        out_tensors[output_key] = output.last_hidden_state
 
       save_file(out_tensors, "#{output_path}")
       """
@@ -1624,4 +1624,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":46983,"stamp":{"token":"XCP.YGPRi24Vn5-WWgqh1AEQSryhlZp64aFhHSFYU8zuY7zTsxdl32WFIQZ6202wuL2d_MtiFe8C77WwqdjUO9pSu-FJrJFCDT0Id6FMyhVQ3VZT0YwWKw","version":2}} -->
+<!-- livebook:{"offset":47062,"stamp":{"token":"XCP.356jTfn0gsbYdqs_7XsRVqKfxin9PllCRJt40Sy2HthZyalLSD5Xexe3GY0HD8B5fm-Kgz59-KnLPqtRLUFKfim9GNIUT1N9LrJ7ytIVIJObw1Qxdg","version":2}} -->

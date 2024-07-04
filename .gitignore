@@ -34,5 +34,5 @@ tableau_new-*.tar
 # livebook artifacts
 /_livebooks/data
 /_livebooks/.asdf
-/_livebooks/flax2axon_env
+/_livebooks/flax_to_axon_env
 !/_livebooks/**/*.livemd
