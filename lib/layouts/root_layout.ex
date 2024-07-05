@@ -12,7 +12,7 @@ defmodule JoelKoch.Dev.RootLayout do
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
         <title>
-          <%= [@page[:title], JoelKoch.Dev]
+          <%= [@page[:title], "Joël Koch"]
           |> Enum.filter(& &1)
           |> Enum.intersperse("|")
           |> Enum.join(" ") %>
