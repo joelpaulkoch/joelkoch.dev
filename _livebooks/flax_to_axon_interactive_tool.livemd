@@ -772,11 +772,9 @@ defmodule Conversion do
 
   def conversion_instruction(index) do
     if index < num_instructions() do
-      instruction = Enum.at(@instructions, index)
-      next_index = index + 1
-      {instruction, next_index}
+      Enum.at(@instructions, index)
     else
-      {@no_op_instruction, index}
+      @no_op_instruction
     end
   end
 
@@ -795,10 +793,10 @@ defmodule Conversion do
   def code_to_string(converted) do
     converted_funcs = Agent.get(converted, &Map.values(&1))
 
-    converted_funcs
-    |> Enum.map(& &1.code)
-    |> Enum.join("\n\n")
-  end
+      converted_funcs
+      |> Enum.map(& &1.code)
+      |> Enum.join("\n\n")
+ end
 
   def params_mappings_to_string(converted) do
     converted_funcs = Agent.get(converted, &Map.values(&1))
@@ -1292,18 +1290,21 @@ import Kino.Shorts
 model_index = Kino.Input.read(target_select)
 model = Enum.at(inputs, model_index)
 
-next = Kino.Control.button("Run Instruction")
+run_instruction = Kino.Control.button("Run Instruction")
+run_all_remaining_instructions = Kino.Control.button("Run All Remaining")
 instruction_status = frame()
-skip = Kino.Control.button("Skip Instruction")
+previous_instruction = Kino.Control.button("Previous")
+next_instruction = Kino.Control.button("Next")
+
 save = Kino.Control.button("Save Converted Model")
-reload_model = Kino.Control.button("Reload")
+reload = Kino.Control.button("Reload")
 
 previous_model_frame = frame()
 current_model_frame = frame()
 
 instruction_frame = frame()
 
-{first_instruction, _} = Conversion.conversion_instruction(0)
+first_instruction = Conversion.conversion_instruction(0)
 num_instructions = Conversion.num_instructions()
 
 Kino.Frame.render(
@@ -1321,7 +1322,17 @@ conversion_layout =
       markdown("### Next LLM instruction"),
       text(""),
       instruction_frame,
-      grid([next, skip, instruction_status], columns: 2),
+      grid(
+        [
+          previous_instruction,
+          run_instruction,
+          next_instruction,
+          run_all_remaining_instructions,
+          instruction_status
+        ],
+        boxed: true,
+        columns: 2
+      ),
       markdown("### Previous version"),
       markdown("### Next LLM input"),
       previous_model_frame,
@@ -1341,7 +1352,9 @@ generate_params_mapping = Kino.Control.button("Generate Params Mapping")
 params_mapping_frame = frame()
 Kino.Frame.render(params_mapping_frame, params_mapping)
 
-axon_build_args = Kino.Input.text("Axon Build Args (function inputs)", default: "[Axon.input(\"in\"), 1, 2]")
+axon_build_args =
+  Kino.Input.text("Axon Build Args (function inputs)", default: "[Axon.input(\"in\"), 1, 2]")
+
 flax_model_args = Kino.Input.text("Flax Model Args (model attributes)", default: "3, 5")
 
 verify = Kino.Control.button("Run Verification")
@@ -1352,7 +1365,7 @@ verification_layout =
   grid(
     [
       current_model_frame,
-      reload_model,
+      reload,
       params_mapping_frame,
       generate_params_mapping,
       grid(
@@ -1380,11 +1393,14 @@ verification_layout =
 
 converted_frame = frame()
 
-converted_code_md = """
-```elixir
-#{Conversion.code_to_string(converted)}
-```
-"""
+converted_code_md =
+  """
+  ```elixir
+  defmodule YourAxonModel do
+    #{Conversion.code_to_string(converted)}
+  end
+  ```
+  """
 
 Kino.Frame.render(converted_frame, markdown(converted_code_md))
 
@@ -1414,13 +1430,27 @@ layout =
     converted_layout
   ])
 
+inputs = %{
+  target_select: target_select,
+  model_input: original_model_text,
+  import_path: import_path,
+  additional_imports: additional_imports,
+  input_shape: input_shape,
+  input_type: input_type,
+  params_mapping: params_mapping,
+  axon_build_args: axon_build_args,
+  flax_model_args: flax_model_args
+}
+
 stream =
   Kino.Control.tagged_stream(
-    next: next,
-    skip: skip,
+    run_instruction: run_instruction,
+    run_all_remaining_instructions: run_all_remaining_instructions,
+    previous_instruction: previous_instruction,
+    next_instruction: next_instruction,
     save: save,
     verify: verify,
-    reload: reload_model,
+    reload: reload,
     gen_params_mapping: generate_params_mapping
   )
 
@@ -1430,14 +1460,52 @@ Kino.nothing()
 ````elixir
 Kino.listen(
   stream,
-  {conversion_chain, original_model_text, params_mapping, 0},
-  fn event, {chain, model_input, params_map, instruction_index} ->
+  {conversion_chain, inputs, 0},
+  fn event, {chain, inputs, instruction_index} ->
     case event do
-      {:next, _e} ->
-        {instruction, next_index} =
+      {:run_all_remaining_instructions, _e} ->
+        model_code = Kino.Input.read(inputs.model_input)
+        Kino.Frame.render(instruction_status, text("Running remaining instructions"))
+
+        {chain, model_code} =
+          for index <- instruction_index..num_instructions, reduce: {chain, model_code} do
+            {chain, model_code} ->
+              instruction =
+                Conversion.conversion_instruction(index)
+
+              {:ok, updated_chain, model_code} =
+                Conversion.update_model(model_code, chain, instruction)
+
+              {updated_chain, model_code}
+          end
+
+        Kino.Frame.render(instruction_status, text("Waiting for instruction"))
+
+        model_code =
+          model_code
+          |> String.trim_leading("```elixir")
+          |> String.trim_leading("```python")
+          |> String.trim_trailing("```")
+
+        model_input =
+          Kino.Input.textarea("Model Code", default: model_code, monospace: true)
+
+        Kino.Frame.render(current_model_frame, model_input)
+
+        last_instruction = Conversion.conversion_instruction(num_instructions)
+
+        Kino.Frame.render(
+          instruction_frame,
+          markdown("[#{num_instructions}/#{num_instructions}] #{last_instruction}")
+        )
+
+        {:cont, {chain, %{inputs | model_input: model_input}, num_instructions}}
+
+      {:run_instruction, _e} ->
+        instruction =
           Conversion.conversion_instruction(instruction_index)
 
-        model_code = Kino.Input.read(model_input)
+        model_code = Kino.Input.read(inputs.model_input)
         Kino.Frame.render(previous_model_frame, markdown(model_code))
 
         Kino.Frame.render(instruction_status, text("Running instruction"))
@@ -1445,12 +1513,19 @@ Kino.listen(
         {:ok, updated_chain, model_code} =
           Conversion.update_model(model_code, chain, instruction)
 
+        model_code =
+          model_code
+          |> String.trim_leading("```elixir")
+          |> String.trim_leading("```python")
+          |> String.trim_trailing("```")
+
         model_input =
           Kino.Input.textarea("Model Code", default: model_code, monospace: true)
 
         Kino.Frame.render(current_model_frame, model_input)
 
-        {next_instruction, _} = Conversion.conversion_instruction(next_index)
+        next_index = instruction_index + 1
+        next_instruction = Conversion.conversion_instruction(next_index)
 
         Kino.Frame.render(
           instruction_frame,
@@ -1459,39 +1534,66 @@ Kino.listen(
 
         Kino.Frame.render(instruction_status, text("Waiting for instruction"))
 
-        {:cont, {updated_chain, model_input, params_map, next_index}}
+        {:cont, {updated_chain, %{inputs | model_input: model_input}, next_index}}
 
-      {:skip, _e} ->
-        {next_instruction, next_index} =
-          Conversion.conversion_instruction(instruction_index)
+      {:previous_instruction, _e} ->
+        previous_index =
+          if instruction_index > 0 do
+            instruction_index - 1
+          else
+            0
+          end
+
+        previous_instruction =
+          Conversion.conversion_instruction(previous_index)
+
+        Kino.Frame.render(
+          instruction_frame,
+          markdown("[#{previous_index}/#{num_instructions}] #{previous_instruction}")
+        )
+
+        {:cont, {chain, inputs, previous_index}}
+
+      {:next_instruction, _e} ->
+        next_index =
+          if instruction_index < num_instructions do
+            instruction_index + 1
+          else
+            instruction_index
+          end
+
+        next_instruction =
+          Conversion.conversion_instruction(next_index)
 
         Kino.Frame.render(
           instruction_frame,
           markdown("[#{next_index}/#{num_instructions}] #{next_instruction}")
         )
 
-        {:cont, {chain, model_input, params_map, next_index}}
+        {:cont, {chain, inputs, next_index}}
 
       {:save, _e} ->
         conversion_target = Kino.Input.read(target_select)
-        model_code = Kino.Input.read(model_input)
+        model_code = Kino.Input.read(inputs.model_input)
 
-        params_mapping = Kino.Input.read(params_map)
+        params_mapping = Kino.Input.read(inputs.params_mapping)
 
         Conversion.put(converted, conversion_target, model_code, params_mapping)
 
         converted_code_md = """
         ```elixir
+        defmodule YourAxonModel do
         #{Conversion.code_to_string(converted)}
+        end
         ```
         """
 
         Kino.Frame.render(converted_frame, markdown(converted_code_md))
 
-        {:cont, {chain, model_input, params_map, instruction_index}}
+        {:cont, {chain, inputs, instruction_index}}
 
       {:verify, _e} ->
-        converted_code = Kino.Input.read(model_input)
+        converted_code = Kino.Input.read(inputs.model_input)
         original_code = Kino.Input.read(original_model_text)
 
         {flax_name, axon_name} = Utils.extract_names(original_code)
@@ -1499,7 +1601,7 @@ Kino.listen(
         input_type = Kino.Input.read(input_type) |> String.to_atom()
         {input_shape, _} = Kino.Input.read(input_shape) |> Code.eval_string()
 
-        {params_mapping, _} = Kino.Input.read(params_map) |> Code.eval_string()
+        {params_mapping, _} = Kino.Input.read(inputs.params_mapping) |> Code.eval_string()
 
         import_path = Kino.Input.read(import_path)
         additional_imports = Kino.Input.read(additional_imports)
@@ -1550,20 +1652,20 @@ Kino.listen(
 
         Kino.Frame.render(current_model_frame, model_input)
 
-        {:cont, {chain, model_input, params_map, instruction_index}}
+        {:cont, {chain, %{inputs | model_input: model_input}, instruction_index}}
 
       {:reload, _e} ->
-        converted_code = Kino.Input.read(model_input)
+        converted_code = Kino.Input.read(inputs.model_input)
 
         model_input =
           Kino.Input.textarea("Model Input", default: converted_code, monospace: true)
 
         Kino.Frame.render(current_model_frame, model_input)
 
-        {:cont, {chain, model_input, params_map, instruction_index}}
+        {:cont, {chain, %{inputs | model_input: model_input}, instruction_index}}
 
       {:gen_params_mapping, _e} ->
-        converted_code = Kino.Input.read(model_input)
+        converted_code = Kino.Input.read(inputs.model_input)
         original_code = Kino.Input.read(original_model_text)
 
         {flax_name, axon_name} = Utils.extract_names(original_code)
@@ -1608,7 +1710,7 @@ Kino.listen(
         new_params_map = Kino.Input.textarea("Params Mapping", default: params_mapping)
         Kino.Frame.render(params_mapping_frame, new_params_map)
 
-        {:cont, {chain, model_input, new_params_map, instruction_index}}
+        {:cont, {chain, %{inputs | params_mapping: new_params_map}, instruction_index}}
     end
   end
 )
@@ -1624,4 +1726,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":47062,"stamp":{"token":"XCP.356jTfn0gsbYdqs_7XsRVqKfxin9PllCRJt40Sy2HthZyalLSD5Xexe3GY0HD8B5fm-Kgz59-KnLPqtRLUFKfim9GNIUT1N9LrJ7ytIVIJObw1Qxdg","version":2}} -->
+<!-- livebook:{"offset":50075,"stamp":{"token":"XCP.mrxplQmIM5LsMJujuPqhfrlzh36eOXIJF8j7dS-UCowOUOHL7DSaa7JYjDGoewF8iBPagCsC86tcF2jAa-EWfTHRG3Woma69l0RaqNI3H8puBqUe5g","version":2}} -->
