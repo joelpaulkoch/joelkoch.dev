@@ -32,7 +32,7 @@ config :tableau, :config,
     mdex: [
       extension: [table: true, header_ids: "", tasklist: true, strikethrough: true],
       render: [unsafe_: true],
-      features: [syntax_highlight_theme: "kanagawa"]
+      features: [syntax_highlight_theme: "onedark"]
     ]
   ]
 
