@@ -793,10 +793,10 @@ defmodule Conversion do
   def code_to_string(converted) do
     converted_funcs = Agent.get(converted, &Map.values(&1))
 
-      converted_funcs
-      |> Enum.map(& &1.code)
-      |> Enum.join("\n\n")
- end
+    converted_funcs
+    |> Enum.map(& &1.code)
+    |> Enum.join("\n\n")
+  end
 
   def params_mappings_to_string(converted) do
     converted_funcs = Agent.get(converted, &Map.values(&1))
@@ -846,7 +846,12 @@ end
 ```elixir
 defmodule Model do
   def apply_model(module_name, model_fn_name, args) do
-    apply(module_name, String.to_atom(model_fn_name), args)
+    try do
+      apply(module_name, String.to_atom(model_fn_name), args)
+      :ok
+    rescue
+      _e -> :error
+    end
   end
 
   def model_string(model_code, module_name, additional_code) do
@@ -861,15 +866,27 @@ defmodule Model do
 
   def build_model(model_code, axon_function_name, build_args, additional_code) do
     model = model_string(model_code, "ModelTest", additional_code)
-    Code.eval_string(model, [], __ENV__)
 
-    model = apply_model(Model.ModelTest, axon_function_name, build_args)
+    try do
+      Code.eval_string(model, [], __ENV__)
 
-    Axon.build(model)
+      model =
+        apply_model(Model.ModelTest, axon_function_name, build_args)
+        |> Axon.build()
+
+      {:ok, model}
+    rescue
+      error -> {:error, error}
+    end
   end
 
   def get_params(init_fn, input_shape, input_type) do
-    init_fn.(Nx.template(input_shape, input_type), %{})
+    try do
+      params = init_fn.(Nx.template(input_shape, input_type), %{})
+      {:ok, params}
+    rescue
+      error -> {:error, error}
+    end
   end
 end
 ```
@@ -1008,7 +1025,7 @@ defmodule Verification do
         output = model.apply(params, input)
         output_key = input_key.replace("input", "output")
 
-        out_tensors[output_key] = output.last_hidden_state
+        out_tensors[output_key] = output
 
       save_file(out_tensors, "#{output_path}")
       """
@@ -1052,37 +1069,36 @@ defmodule Verification do
   end
 
   def verify_model(axon_model, flax_model, params_mapping) do
-    {init_fn, predict_fn} =
-      Model.build_model(
-        axon_model.code,
-        axon_model.name,
-        axon_model.build_args,
-        axon_model.additional_code
+    with {:ok, {init_fn, predict_fn}} <-
+           Model.build_model(
+             axon_model.code,
+             axon_model.name,
+             axon_model.build_args,
+             axon_model.additional_code
+           ),
+         {:ok, params} <- Model.get_params(init_fn, axon_model.input_shape, axon_model.input_type) do
+      save_params(params, params_mapping, axon_model.params_path, flax_model.params_path)
+
+      run_axon_and_save(predict_fn, params, axon_model.input_shape, axon_model.results_path)
+
+      run_flax_and_save(
+        flax_model.name,
+        flax_model.model_args,
+        axon_model.results_path,
+        flax_model.results_path,
+        flax_model.params_path,
+        flax_model.import_path,
+        flax_model.additional_imports
       )
 
-    params = Model.get_params(init_fn, axon_model.input_shape, axon_model.input_type)
+      # check if results are the same 
+      results = verification_results(axon_model.results_path, flax_model.results_path)
 
-    save_params(params, params_mapping, axon_model.params_path, flax_model.params_path)
-
-    run_axon_and_save(predict_fn, params, axon_model.input_shape, axon_model.results_path)
-
-    run_flax_and_save(
-      flax_model.name,
-      flax_model.model_args,
-      axon_model.results_path,
-      flax_model.results_path,
-      flax_model.params_path,
-      flax_model.import_path,
-      flax_model.additional_imports
-    )
-
-    # check if results are the same 
-    results = verification_results(axon_model.results_path, flax_model.results_path)
-
-    if Enum.all?(results, fn {_k, res} -> res.same_result? end) do
-      {:ok, results}
-    else
-      {:verification_failed, results}
+      if Enum.all?(results, fn {_k, res} -> res.same_result? end) do
+        {:ok, results}
+      else
+        {:verification_failed, results}
+      end
     end
   end
 end
@@ -1169,10 +1185,17 @@ defmodule ParamsMapping do
   end
 
   def axon_params(model, input_shape, input_type) do
-    {init_fn, _predict_fn} = Axon.build(model)
-    params = init_fn.(Nx.template(input_shape, input_type), %{})
+    try do
+      {init_fn, _predict_fn} = Axon.build(model)
 
-    ParamsUtils.flatten_keys(params)
+      params =
+        init_fn.(Nx.template(input_shape, input_type), %{})
+        |> ParamsUtils.flatten_keys()
+
+      {:ok, params}
+    rescue
+      e -> {:error, e}
+    end
   end
 
   def flax_params(module, import_path, additional_imports, model_args, input_shape) do
@@ -1222,9 +1245,10 @@ defmodule ParamsMapping do
       print(list(l.keys()))
       """
 
-    {params, 0} = System.cmd(@python, ["-c", python_script], [])
-
-    params
+    case System.cmd(@python, ["-c", python_script], []) do
+      {params, 0} -> {:ok, params}
+      {output, _code} -> {:error, output}
+    end
   end
 
   def params_mapping(chain, axon_params, flax_params) do
@@ -1342,20 +1366,41 @@ conversion_layout =
     columns: 2
   )
 
+params_mapping = Kino.Input.textarea("Params Mapping")
+generate_params_mapping = Kino.Control.button("Generate Params Mapping")
+generate_params_status = frame()
+Kino.Frame.render(generate_params_status, text("Waiting"))
+params_mapping_frame = frame()
+Kino.Frame.render(params_mapping_frame, params_mapping)
+
 import_path = Kino.Input.text("Import Path", default: "transformers.models.this")
 additional_imports = Kino.Input.text("Additional Imports", default: "#from path import Class")
 input_shape = Kino.Input.text("Input Shape", default: "{3, 3}")
 input_type = Kino.Input.text("Input Type", default: "f32")
 
-params_mapping = Kino.Input.textarea("Params Mapping")
-generate_params_mapping = Kino.Control.button("Generate Params Mapping")
-params_mapping_frame = frame()
-Kino.Frame.render(params_mapping_frame, params_mapping)
-
 axon_build_args =
   Kino.Input.text("Axon Build Args (function inputs)", default: "[Axon.input(\"in\"), 1, 2]")
 
 flax_model_args = Kino.Input.text("Flax Model Args (model attributes)", default: "3, 5")
+verification_params_frame = frame()
+verification_status = frame()
+Kino.Frame.render(verification_status, text("Waiting"))
+
+Kino.Frame.render(
+  verification_params_frame,
+  grid(
+    [
+      import_path,
+      additional_imports,
+      input_shape,
+      input_type,
+      axon_build_args,
+      flax_model_args
+    ],
+    boxed: true,
+    columns: 2
+  )
+)
 
 verify = Kino.Control.button("Run Verification")
 result_status_frame = frame()
@@ -1367,20 +1412,9 @@ verification_layout =
       current_model_frame,
       reload,
       params_mapping_frame,
-      generate_params_mapping,
-      grid(
-        [
-          import_path,
-          additional_imports,
-          input_shape,
-          input_type,
-          axon_build_args,
-          flax_model_args
-        ],
-        boxed: true,
-        columns: 2
-      ),
-      verify,
+      grid([generate_params_mapping, generate_params_status]),
+      verification_params_frame,
+      grid([verify, verification_status]),
       markdown("### Verification Status"),
       markdown("### Failed Verification Results"),
       result_status_frame,
@@ -1573,7 +1607,7 @@ Kino.listen(
         {:cont, {chain, inputs, next_index}}
 
       {:save, _e} ->
-        conversion_target = Kino.Input.read(target_select)
+        conversion_target = Kino.Input.read(inputs.target_select)
         model_code = Kino.Input.read(inputs.model_input)
 
         params_mapping = Kino.Input.read(inputs.params_mapping)
@@ -1598,16 +1632,16 @@ Kino.listen(
 
         {flax_name, axon_name} = Utils.extract_names(original_code)
 
-        input_type = Kino.Input.read(input_type) |> String.to_atom()
-        {input_shape, _} = Kino.Input.read(input_shape) |> Code.eval_string()
+        input_type = Kino.Input.read(inputs.input_type) |> String.to_atom()
+        {input_shape, _} = Kino.Input.read(inputs.input_shape) |> Code.eval_string()
 
         {params_mapping, _} = Kino.Input.read(inputs.params_mapping) |> Code.eval_string()
 
-        import_path = Kino.Input.read(import_path)
-        additional_imports = Kino.Input.read(additional_imports)
+        import_path = Kino.Input.read(inputs.import_path)
+        additional_imports = Kino.Input.read(inputs.additional_imports)
 
-        {axon_build_args, _} = Kino.Input.read(axon_build_args) |> Code.eval_string()
-        flax_model_args = Kino.Input.read(flax_model_args)
+        {axon_build_args, _} = Kino.Input.read(inputs.axon_build_args) |> Code.eval_string()
+        flax_model_args = Kino.Input.read(inputs.flax_model_args)
 
         previously_converted_code = Conversion.code_to_string(converted)
 
@@ -1635,34 +1669,96 @@ Kino.listen(
           results_path: axon_path
         }
 
-        {status, verification_details} =
-          Verification.verify_model(
-            axon_model_data,
-            flax_model_data,
-            params_mapping
-          )
+        Kino.Frame.render(verification_status, text("Running Verification"))
 
-        Kino.Frame.render(result_status_frame, status)
+        case Verification.verify_model(
+               axon_model_data,
+               flax_model_data,
+               params_mapping
+             ) do
+          {:ok, verification_details} ->
+            Kino.Frame.render(verification_status, text("Waiting"))
 
-        failed = Enum.filter(verification_details, fn {_key, value} -> not value.same_result? end)
-        Kino.Frame.render(results_frame, failed)
+            Kino.Frame.render(result_status_frame, :ok)
 
-        model_input =
-          Kino.Input.textarea("Model Input", default: converted_code, monospace: true)
+            failed =
+              Enum.filter(verification_details, fn {_key, value} -> not value.same_result? end)
 
-        Kino.Frame.render(current_model_frame, model_input)
+            Kino.Frame.render(results_frame, failed)
 
-        {:cont, {chain, %{inputs | model_input: model_input}, instruction_index}}
+          {:error, error} ->
+            Kino.Frame.render(verification_status, error)
+            Kino.Frame.render(result_status_frame, :error)
+        end
+
+        {:cont, {chain, inputs, instruction_index}}
 
       {:reload, _e} ->
-        converted_code = Kino.Input.read(inputs.model_input)
+        converted_code =
+          Kino.Input.read(inputs.model_input)
+          |> String.trim()
 
         model_input =
           Kino.Input.textarea("Model Input", default: converted_code, monospace: true)
 
         Kino.Frame.render(current_model_frame, model_input)
 
-        {:cont, {chain, %{inputs | model_input: model_input}, instruction_index}}
+        params_mapping = Kino.Input.read(inputs.params_mapping)
+        params_mapping = Kino.Input.textarea("Params Mapping", default: params_mapping)
+        Kino.Frame.render(params_mapping_frame, params_mapping)
+        Kino.Frame.render(generate_params_status, text("Waiting"))
+
+        import_path = Kino.Input.read(inputs.import_path)
+        import_path = Kino.Input.text("Import Path", default: import_path)
+
+        additional_imports = Kino.Input.read(inputs.additional_imports)
+        additional_imports = Kino.Input.text("Additional Imports", default: additional_imports)
+        input_shape = Kino.Input.read(inputs.input_shape)
+        input_shape = Kino.Input.text("Input Shape", default: input_shape)
+        input_type = Kino.Input.read(inputs.input_type)
+        input_type = Kino.Input.text("Input Type", default: input_type)
+
+        axon_build_args = Kino.Input.read(inputs.axon_build_args)
+
+        axon_build_args =
+          Kino.Input.text("Axon Build Args (function inputs)", default: axon_build_args)
+
+        flax_model_args = Kino.Input.read(inputs.flax_model_args)
+
+        flax_model_args =
+          Kino.Input.text("Flax Model Args (model attributes)", default: flax_model_args)
+
+        Kino.Frame.render(
+          verification_params_frame,
+          grid(
+            [
+              import_path,
+              additional_imports,
+              input_shape,
+              input_type,
+              axon_build_args,
+              flax_model_args
+            ],
+            boxed: true,
+            columns: 2
+          )
+        )
+
+        Kino.Frame.render(verification_status, text("Waiting"))
+
+        updated_inputs = %{
+          inputs
+          | model_input: model_input,
+            params_mapping: params_mapping,
+            import_path: import_path,
+            additional_imports: additional_imports,
+            input_shape: input_shape,
+            input_type: input_type,
+            axon_build_args: axon_build_args,
+            flax_model_args: flax_model_args
+        }
+
+        {:cont, {chain, updated_inputs, instruction_index}}
 
       {:gen_params_mapping, _e} ->
         converted_code = Kino.Input.read(inputs.model_input)
@@ -1670,47 +1766,51 @@ Kino.listen(
 
         {flax_name, axon_name} = Utils.extract_names(original_code)
 
-        input_type = Kino.Input.read(input_type) |> String.to_atom()
-        {input_shape, _} = Kino.Input.read(input_shape) |> Code.eval_string()
+        input_type = Kino.Input.read(inputs.input_type) |> String.to_atom()
+        {input_shape, _} = Kino.Input.read(inputs.input_shape) |> Code.eval_string()
 
-        import_path = Kino.Input.read(import_path)
-        additional_imports = Kino.Input.read(additional_imports)
+        import_path = Kino.Input.read(inputs.import_path)
+        additional_imports = Kino.Input.read(inputs.additional_imports)
 
-        {axon_build_args, _} = Kino.Input.read(axon_build_args) |> Code.eval_string()
-        flax_model_args = Kino.Input.read(flax_model_args)
+        {axon_build_args, _} = Kino.Input.read(inputs.axon_build_args) |> Code.eval_string()
+        flax_model_args = Kino.Input.read(inputs.flax_model_args)
 
         previously_converted = Conversion.code_to_string(converted)
 
-        Model.build_model(converted_code, axon_name, axon_build_args, previously_converted)
+        with {:ok, _model} <-
+               Model.build_model(converted_code, axon_name, axon_build_args, previously_converted),
+             :ok <- Model.apply_model(Model.ModelTest, axon_name, axon_build_args),
+             {:ok, axon_params} <- ParamsMapping.axon_params(model, input_shape, input_type),
+             {:ok, flax_params} <-
+               ParamsMapping.flax_params(
+                 flax_name,
+                 import_path,
+                 additional_imports,
+                 flax_model_args,
+                 input_shape
+               ) do
+          Kino.Frame.render(generate_params_status, text("Generating Params Mapping"))
 
-        model = Model.apply_model(Model.ModelTest, axon_name, axon_build_args)
-        # apply(ModelTest, String.to_atom(axon_name), axon_build_args)
+          params_mapping =
+            ParamsMapping.params_mapping(params_mapping_chain, axon_params, flax_params)
+            |> String.trim_leading("```elixir")
+            |> String.trim_trailing("```")
 
-        axon_params =
-          ParamsMapping.axon_params(
-            model,
-            input_shape,
-            input_type
-          )
+          Kino.Frame.render(generate_params_status, text("Waiting"))
 
-        flax_params =
-          ParamsMapping.flax_params(
-            flax_name,
-            import_path,
-            additional_imports,
-            flax_model_args,
-            input_shape
-          )
+          Kino.Input.textarea("Params Mapping", default: params_mapping)
 
-        params_mapping =
-          ParamsMapping.params_mapping(params_mapping_chain, axon_params, flax_params)
-          |> String.trim_leading("```elixir")
-          |> String.trim_trailing("```")
+          Kino.Frame.render(params_mapping_frame, params_mapping)
 
-        new_params_map = Kino.Input.textarea("Params Mapping", default: params_mapping)
-        Kino.Frame.render(params_mapping_frame, new_params_map)
+          {:cont, {chain, %{inputs | params_mapping: params_mapping}, instruction_index}}
+        else
+          {:error, error} ->
+            Kino.Frame.render(generate_params_status, error)
 
-        {:cont, {chain, %{inputs | params_mapping: new_params_map}, instruction_index}}
+            old_params_mapping = Kino.Input.read(inputs.params_mapping)
+            params_mapping = Kino.Input.textarea("Params Mapping", default: old_params_mapping)
+            {:cont, {chain, %{inputs | params_mapping: params_mapping}, instruction_index}}
+        end
     end
   end
 )
@@ -1726,4 +1826,4 @@ Kino.listen(
 layout
 ```
 
-<!-- livebook:{"offset":50075,"stamp":{"token":"XCP.mrxplQmIM5LsMJujuPqhfrlzh36eOXIJF8j7dS-UCowOUOHL7DSaa7JYjDGoewF8iBPagCsC86tcF2jAa-EWfTHRG3Woma69l0RaqNI3H8puBqUe5g","version":2}} -->
+<!-- livebook:{"offset":53653,"stamp":{"token":"XCP.pvcKraE0GodvkI2oAeFEc7MyGE4Pp0vbZiixj7geY9VBHOzS_KL--DvvoAfmfd9PWR-ugWahdtPbVvgOFVAA-s0ZhxxePksqtQIXI2I60xx91iS37g","version":2}} -->
