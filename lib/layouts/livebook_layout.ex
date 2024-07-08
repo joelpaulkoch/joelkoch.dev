@@ -14,7 +14,7 @@ defmodule JoelKoch.Dev.LivebookLayout do
         </a>
         <div class="flex grow justify-end">
           <a :if={@page[:discussions_url]} href={@page.discussions_url}>
-            <Heroicons.chat_bubble_left_right class="min-h-16" />
+            <Heroicons.chat_bubble_left_right class="size-16" />
           </a>
           <a :if={@page[:livebook_url]} href={@page.livebook_url}>
             <img src="/github-mark.svg" class="dark:hidden" />
@@ -22,7 +22,7 @@ defmodule JoelKoch.Dev.LivebookLayout do
           </a>
         </div>
       </div>
-      <article class="*:overflow-x-auto">
+      <article class="livebook-text *:my-4 *:overflow-x-auto *:px-4">
         <%= {:safe, render(@inner_content)} %>
       </article>
     </div>
