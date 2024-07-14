@@ -7,8 +7,8 @@ defmodule JoelKoch.Dev.HomePage do
 
   def template(assigns) do
     ~H"""
-    <div class="h-lvh grid grid-rows-4">
-      <div class="row-span-2 row-start-2 mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-16 lg:grid-cols-3">
+    <div class="h-lvh ">
+      <div class="relative top-1/4 mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-16 lg:grid-cols-3">
         <div class="size-64 mx-auto sm:size-128">
           <img
             class="rounded-3xl object-contain"
@@ -33,9 +33,9 @@ defmodule JoelKoch.Dev.HomePage do
           </div>
         </div>
       </div>
-      <div class="row-start-4 mx-auto my-auto">
+      <div class="absolute bottom-0 w-full">
         <a href="#livebooks">
-          <Heroicons.chevron_down class="size-16" />
+          <Heroicons.chevron_down class="mx-auto size-16" />
         </a>
       </div>
     </div>
