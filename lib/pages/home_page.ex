@@ -25,10 +25,11 @@ defmodule JoelKoch.Dev.HomePage do
           <div>
             <a
               href="https://github.com/joelpaulkoch"
-              class="text-bold flex w-fit flex-row items-center gap-2 rounded-md p-2 underline ring-white transition hover:ring sm:gap-4 sm:p-4"
+              class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-white transition hover:ring sm:gap-4 sm:p-4"
             >
-              Checkout my GitHub profile <img src="/github-mark.svg" class="size-8 dark:hidden" />
-              <img src="/github-mark-white.svg" class="size-8 hidden dark:block" />
+              <span> Checkout my GitHub profile </span>
+              <img src="/github-mark.svg" width="32" height="32" class="dark:hidden" />
+              <img src="/github-mark-white.svg" width="32" height="32" class="hidden dark:block" />
             </a>
           </div>
         </div>
