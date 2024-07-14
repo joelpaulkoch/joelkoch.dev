@@ -7,12 +7,12 @@ defmodule JoelKoch.Dev.HomePage do
 
   def template(assigns) do
     ~H"""
-    <div class="h-lvh ">
+    <div class="h-lvh">
       <div class="relative top-1/4 mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-16 lg:grid-cols-3">
-        <div class="size-64 mx-auto sm:size-128">
+        <div class="mx-auto">
           <img
             class="rounded-3xl object-contain"
-            src="https://www.gravatar.com/avatar/a7eb43bdf873c6edcb9d79b0acb21764a78c6983deabba6cbc7fae944645c63c?s=1000"
+            src="https://www.gravatar.com/avatar/a7eb43bdf873c6edcb9d79b0acb21764a78c6983deabba6cbc7fae944645c63c?s=256"
           />
         </div>
         <div class="flex flex-col items-center gap-2 sm:items-start sm:gap-8 lg:col-span-2">
