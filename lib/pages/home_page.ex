@@ -40,7 +40,7 @@ defmodule JoelKoch.Dev.HomePage do
         </a>
       </div>
     </div>
-    <div id="livebooks" class="min-h-60 bg-neutral-900 py-16">
+    <div id="livebooks" class="bg-neutral-900 py-16">
       <div class="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2">
         <div class="row-span-2 rounded-xl bg-white p-4 dark:bg-neutral-800">
           <h2 class="bold text-xl">
@@ -61,7 +61,7 @@ defmodule JoelKoch.Dev.HomePage do
               I've done this other thing
             </p>
           </div>
-          <div class="col-start-3 m-auto ">
+          <div class="col-start-3 m-auto hover:scale-110 ">
             <a href="https://livebook.dev/run?url=test">
               <img src="https://livebook.dev/badge/v1/blue.svg" alt="Run in Livebook" />
             </a>
