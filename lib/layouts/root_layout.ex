@@ -40,18 +40,16 @@ defmodule JoelKoch.Dev.RootLayout do
 
   def footer(assigns) do
     ~H"""
-    <footer class="min-h-20 mx-auto flex w-full max-w-7xl shrink-0 flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-neutral-800 py-4 transition hover:border-white sm:flex-row">
-      <p class="">
+    <footer class="mx-auto flex max-w-7xl flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-neutral-800 py-4 transition hover:border-white sm:flex-row">
+      <span class="p-2">
         © 2024 Joël Koch
-      </p>
-      <nav>
-        <a href="/test" class="rounded-md p-2 ring-white transition hover:ring">
-          Nav somewhere
-        </a>
-      </nav>
-      <p class="">
-        Made with Tableau
-      </p>
+      </span>
+      <a
+        href="https://github.com/elixir-tools/tableau"
+        class="rounded-md p-2 underline ring-white transition hover:ring"
+      >
+        Built with Tableau
+      </a>
     </footer>
     """
   end
