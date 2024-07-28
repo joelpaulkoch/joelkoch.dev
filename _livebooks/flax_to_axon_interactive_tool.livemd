@@ -190,31 +190,19 @@ In this section we define a set of messages we pass to the LLM to make it help u
 * Instructions the LLM will perform one at a time to convert the code
 
 ```elixir
-system_messages =
-  [
-    """
-    You are an expert in machine learning frameworks.
-    You help converting models from Python code in Flax linen framework to Elixir code in the Axon framework.
-    """,
-    """
-    You will do this by following instructions step by step.
-    """,
-    """
-    I will provide you with the model code and an instruction in the following format:
-    INSTRUCTION: here is the instruction you perform
-    MODEL: here is the model code you will modify
-    """,
-    """
-    For each of the following instructions, reply only with the modified code of the model.
-    Do NOT include any other content or comments.
-    """,
-    """
-    Perform ONLY the action the instruction asks you to do.
-    """,
-    """
-    In case you don't change anything return ONLY the unchanged model code.
-    """
-  ]
+system_message =
+  """
+  You are an expert in machine learning frameworks.
+  You help converting models from Python code in Flax linen framework to Elixir code in the Axon framework.
+  You will do this by following instructions step by step.
+  For each of the instructions, reply ONLY with the modified code of the model.
+  Do NOT include any other content or comments.
+  Perform ONLY the action the instruction asks you to do.
+  In case you don't change anything return ONLY the unchanged model code.
+  I will provide you with the model code and an instruction in the following format:
+  INSTRUCTION: here is the instruction you perform
+  MODEL: here is the model code you will modify
+  """
 
 Kino.nothing()
 ```
@@ -764,7 +752,7 @@ defmodule Conversion do
   alias LangChain.Message
   alias LangChain.Chains.LLMChain
 
-  @system_messages system_messages ++ conversion_messages
+  @system_messages [ system_message | conversion_messages]
   @instructions conversion_instructions
   @no_op_instruction "return unchanged code"
 
