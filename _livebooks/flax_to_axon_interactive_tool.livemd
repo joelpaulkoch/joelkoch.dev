@@ -1438,7 +1438,7 @@ converted_layout =
     columns: 2
   )
 
-layout =
+ui =
   grid([
     grid([markdown("### Select Input File"), input_file]),
     target_select,
@@ -1786,7 +1786,7 @@ Kino.listen(
 
           Kino.Frame.render(generate_params_status, text("Waiting"))
 
-          Kino.Input.textarea("Params Mapping", default: params_mapping)
+          params_mapping = Kino.Input.textarea("Params Mapping", default: params_mapping)
 
           Kino.Frame.render(params_mapping_frame, params_mapping)
 
@@ -1797,6 +1797,7 @@ Kino.listen(
 
             old_params_mapping = Kino.Input.read(inputs.params_mapping)
             params_mapping = Kino.Input.textarea("Params Mapping", default: old_params_mapping)
+            Kino.Frame.render(params_mapping_frame, params_mapping)
             {:cont, {chain, %{inputs | params_mapping: params_mapping}, instruction_index}}
         end
     end
@@ -1811,7 +1812,7 @@ Kino.listen(
 <!-- livebook:{"reevaluate_automatically":true} -->
 
 ```elixir
-layout
+ui
 ```
 
 <!-- livebook:{"offset":53653,"stamp":{"token":"XCP.pvcKraE0GodvkI2oAeFEc7MyGE4Pp0vbZiixj7geY9VBHOzS_KL--DvvoAfmfd9PWR-ugWahdtPbVvgOFVAA-s0ZhxxePksqtQIXI2I60xx91iS37g","version":2}} -->
