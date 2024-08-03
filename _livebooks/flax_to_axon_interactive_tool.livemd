@@ -30,9 +30,7 @@ asdf = "#{asdf_dir}/bin/asdf"
 {_, 0} = System.cmd(asdf, ["plugin", "add", "python"], env: [{"ASDF_DATA_DIR", asdf_dir}])
 
 {_, 0} =
-  System.cmd(asdf, ["install", "python", "3.11.9"],
-    env: [{"ASDF_DATA_DIR", "#{__DIR__}/.asdf"}]
-  )
+  System.cmd(asdf, ["install", "python", "3.11.9"], env: [{"ASDF_DATA_DIR", "#{__DIR__}/.asdf"}])
 
 asdf_python = Path.join([asdf_dir, "installs", "python", "3.11.9", "bin", "python"])
 
@@ -835,8 +833,7 @@ end
 defmodule Model do
   def apply_model(module_name, model_fn_name, args) do
     try do
-      apply(module_name, String.to_atom(model_fn_name), args)
-      :ok
+      {:ok, apply(module_name, String.to_atom(model_fn_name), args)}
     rescue
       _e -> :error
     end
@@ -858,9 +855,9 @@ defmodule Model do
     try do
       Code.eval_string(model, [], __ENV__)
 
-      model =
-        apply_model(Model.ModelTest, axon_function_name, build_args)
-        |> Axon.build()
+      {:ok, model} = apply_model(Model.ModelTest, axon_function_name, build_args)
+
+      model = Axon.build(model)
 
       {:ok, model}
     rescue
@@ -1767,7 +1764,7 @@ Kino.listen(
 
         with {:ok, _model} <-
                Model.build_model(converted_code, axon_name, axon_build_args, previously_converted),
-             :ok <- Model.apply_model(Model.ModelTest, axon_name, axon_build_args),
+             {:ok, _} <- Model.apply_model(Model.ModelTest, axon_name, axon_build_args),
              {:ok, axon_params} <- ParamsMapping.axon_params(model, input_shape, input_type),
              {:ok, flax_params} <-
                ParamsMapping.flax_params(
@@ -1798,6 +1795,7 @@ Kino.listen(
             old_params_mapping = Kino.Input.read(inputs.params_mapping)
             params_mapping = Kino.Input.textarea("Params Mapping", default: old_params_mapping)
             Kino.Frame.render(params_mapping_frame, params_mapping)
+
             {:cont, {chain, %{inputs | params_mapping: params_mapping}, instruction_index}}
         end
     end
