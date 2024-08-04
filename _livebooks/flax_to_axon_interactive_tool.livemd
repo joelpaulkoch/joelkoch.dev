@@ -632,7 +632,7 @@ conversion_instructions = [
   ```
   """,
   """
-  In the `call` function, move all additional parameters when calling the layers to the initialization of the layers. Each layer should be called with a single argument.
+  In the `__call__` function, move all additional parameters when calling the layers to the initialization of the layers. Each layer should be called with a single argument.
   DO NOT PERFORM ANY OTHER TRANSFORMATION. IF THERE IS NOTHING TO DO RETURN THE UNCHANGED CODE.
   Here an example.
 
