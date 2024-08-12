@@ -234,7 +234,7 @@ Here an example for the Conv layer of Flax linen:
 | Axon | Axon.conv | units    | kernel_size | strides | padding | -     | use_bias | kernel_initializer |
 
 ```elixir
-conversion_layers =
+conversion_layers_table =
   """
   ### Conv Layer
 
@@ -321,7 +321,7 @@ conversion_layers =
   | **Axon** | Axon.flatten |
   """
 
-Kino.Markdown.new(conversion_layers)
+Kino.Markdown.new(conversion_layers_table)
 ```
 
 #### Initializers
@@ -347,7 +347,7 @@ Here an example for the `initializers.variance_scaling` of Flax linen:
 | Axon  | Axon.Initializers.variance_scaling | scale | mode | distribution |
 
 ```elixir
-conversion_initializers =
+conversion_initializers_table =
   """
   ### Variance Scaling
 
@@ -434,7 +434,7 @@ conversion_initializers =
   | Axon | Axon.Initializers.zeros |
   """
 
-Kino.Markdown.new(conversion_initializers)
+Kino.Markdown.new(conversion_initializers_table)
 ```
 
 #### Activation Functions
@@ -459,7 +459,7 @@ Here an example for `activation.softmax` of Flax linen:
 | Axon | Axon.Activations.softmax | axis | -     | -       |
 
 ```elixir
-conversion_activations =
+conversion_activations_table =
   """
   ### Softmax
 
@@ -539,21 +539,10 @@ conversion_activations =
   | Axon | Axon.Activations.log_softmax | axis | -     | -       |
   """
 
-Kino.Markdown.new(conversion_activations)
+Kino.Markdown.new(conversion_activations_table)
 ```
 
 ### Detailed instructions how to convert the model
-
-```elixir
-conversion_messages =
-  [
-    conversion_layers,
-    conversion_initializers,
-    conversion_activations
-  ]
-
-Kino.nothing()
-```
 
 ````elixir
 conversion_instructions = [
@@ -806,7 +795,9 @@ conversion_instructions = [
   ```
   """,
   """
-  Replace the Flax layers with the corresponding Axon layers according to our conversion table.  
+  Replace the Flax layers with the corresponding Axon layers according to this conversion table:
+  #{conversion_layers_table}
+  
   Return only the Elixir code for the model. 
   Take into account the parameters in the first parenthesis. 
   You must follow these rules to replace layers:
@@ -817,7 +808,12 @@ conversion_instructions = [
   - When the Flax code specifies a name for the layer, add that name as option to the Axon layer:
     Example: replace `dense0 = nn.Dense(features=32, name="dense0")` with `dense0 = &Axon.dense(&1, 32, name: "dense0")`
   
-  Replace initializer functions with the corresponding Axon functions. 
+  Replace initializer functions with the corresponding Axon functions according to this table:
+  #{conversion_initializers_table}
+
+  Replace activation functions according to this table:
+  #{conversion_activations_table}
+  
   You must follow these rules to replace activation functions: 
   - If there is an activation parameter, and the code makes use of ACT2FN[activation], replace that with Axon.activation(activation). 
   - If there is an actual activation function called, replace it with Axon's activation function according to the conversion table. 
@@ -963,7 +959,7 @@ defmodule Conversion do
   alias LangChain.Message
   alias LangChain.Chains.LLMChain
 
-  @system_messages [ system_message | conversion_messages]
+  @system_message system_message
   @instructions conversion_instructions
   @no_op_instruction "return unchanged code"
 
@@ -1006,12 +1002,10 @@ defmodule Conversion do
   end
 
   def new_chain!(llm_config) do
-    system_messages = Enum.map(@system_messages, &Message.new_system!(&1))
-
     {:ok, chain, _response} =
       %{llm: llm_config}
       |> LLMChain.new!()
-      |> LLMChain.add_messages(system_messages)
+      |> LLMChain.add_message(Message.new_system!(@system_message))
       |> LLMChain.run()
 
     chain
