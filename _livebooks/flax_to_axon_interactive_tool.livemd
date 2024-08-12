@@ -81,7 +81,7 @@ api_key = System.get_env("LB_OPENAI_KEY")
 
 llm_config =
   LangChain.ChatModels.ChatOpenAI.new!(%{
-    model: "gpt-4o",
+    model: "gpt-4o-mini",
     api_key: api_key,
     seed: 0
   })
