@@ -1983,8 +1983,10 @@ Kino.listen(
 
         with {:ok, _model} <-
                Model.build_model(converted_code, axon_name, axon_build_args, previously_converted),
-             {:ok, _} <- Model.apply_model(Model.ModelTest, axon_name, axon_build_args),
-             {:ok, axon_params} <- ParamsMapping.axon_params(model, input_shape, input_type),
+             {:ok, model} <-
+               Model.apply_model(Model.ModelTest, axon_name, axon_build_args),
+             {:ok, axon_params} <-
+               ParamsMapping.axon_params(model, input_shape, input_type),
              {:ok, flax_params} <-
                ParamsMapping.flax_params(
                  flax_name,
