@@ -1038,11 +1038,15 @@ end
 
 ```elixir
 defmodule Model do
+  require Logger
+
   def apply_model(module_name, model_fn_name, args) do
     try do
       {:ok, apply(module_name, String.to_atom(model_fn_name), args)}
     rescue
-      _e -> :error
+      e ->
+        Logger.error(e)
+        {:error, e}
     end
   end
 
@@ -1068,7 +1072,9 @@ defmodule Model do
 
       {:ok, model}
     rescue
-      error -> {:error, error}
+      error -> 
+        Logger.error(error)
+        {:error, error}
     end
   end
 
@@ -1077,7 +1083,9 @@ defmodule Model do
       params = init_fn.(Nx.template(input_shape, input_type), %{})
       {:ok, params}
     rescue
-      error -> {:error, error}
+      error -> 
+        Logger.error(error)
+        {:error, error}
     end
   end
 end
@@ -1344,6 +1352,8 @@ end
 
 ```elixir
 defmodule ParamsMapping do
+  require Logger
+  
   alias LangChain.Message
   alias LangChain.Chains.LLMChain
 
@@ -1386,7 +1396,9 @@ defmodule ParamsMapping do
 
       {:ok, params}
     rescue
-      e -> {:error, e}
+      e -> 
+        Logger.error(e)
+        {:error, e}
     end
   end
 
