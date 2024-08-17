@@ -340,11 +340,10 @@ If there is no corresponding initializer, or no corresponding parameter, add a "
 
 Here an example for the `initializers.variance_scaling` of Flax linen:
 
-|      |                                  |       |      |              |         |          |            |       |
-| ---- | -------------------------------- | ----- | ---- | ------------ | ------- | -------- | ---------- | ----- |
-| Flax | nn.initializers.variance_scaling | scale | mode | distribution | in_axis | out_axis | batch_axis | dtype |
-
-| Axon  | Axon.Initializers.variance_scaling | scale | mode | distribution |
+|      |                                    |       |      |              |         |          |            |       |
+| ---- | ---------------------------------- | ----- | ---- | ------------ | ------- | -------- | ---------- | ----- |
+| Flax | nn.initializers.variance_scaling   | scale | mode | distribution | in_axis | out_axis | batch_axis | dtype |
+| Axon | Axon.Initializers.variance_scaling | scale | mode | distribution | -       | -        | -          | -     |
 
 ```elixir
 conversion_initializers_table =
@@ -2033,5 +2032,3 @@ Kino.listen(
 ```elixir
 ui
 ```
-
-<!-- livebook:{"offset":60338,"stamp":{"token":"XCP.ZrvOX-INyoXDXylllhHVAlpPAEGDtJEh28baR-4N3BQSiHU62rYAYBNP3-i1hLAG3pdnBUrWSUdmMyfh4tWs-GCNk-VALDQeoaS1ytG7CCfL6MMYjA","version":2}} -->
