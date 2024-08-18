@@ -15,14 +15,14 @@ defmodule JoelKoch.Dev.HomePage do
             src="https://www.gravatar.com/avatar/a7eb43bdf873c6edcb9d79b0acb21764a78c6983deabba6cbc7fae944645c63c?s=256"
           />
         </div>
-        <div class="flex flex-col items-center gap-2 sm:items-start sm:gap-8 lg:col-span-2">
+        <div class="flex flex-col items-center gap-4 px-4 pt-4 mx-auto max-w-80 sm:items-start sm:gap-8">
           <h1 class="text-bold text-xl sm:text-5xl">
-            It's me, Joël
+            This is me, Joël
           </h1>
           <p>
-            What's up?
+            Happy to code for fun and a living.
           </p>
-          <div>
+          <div class="self-end">
             <a
               href="https://github.com/joelpaulkoch"
               class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-white transition hover:ring sm:gap-4 sm:p-4"
@@ -30,6 +30,15 @@ defmodule JoelKoch.Dev.HomePage do
               <span> Checkout my GitHub profile </span>
               <img src="/github-mark.svg" width="32" height="32" class="dark:hidden" />
               <img src="/github-mark-white.svg" width="32" height="32" class="hidden dark:block" />
+            </a>
+          </div>
+          <div class="self-end">
+            <a
+              href="/resume"
+              class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-white transition hover:ring sm:gap-4 sm:p-4"
+            >
+              <span> ... or what I've done so far</span>
+              <Heroicons.document_text class="size-8" />
             </a>
           </div>
         </div>
