@@ -4,14 +4,16 @@ defmodule JoelKoch.Dev.PageLayout do
 
   def template(assigns) do
     ~H"""
-    <div class="flex">
-      <nav class="sm:hidden">
-        <a href="/"> Home</a>
-        <a href="/livebooks"> Livebooks</a>
-      </nav>
-    </div>
-    <div class="mx-auto max-w-7xl">
-      <%= {:safe, render(@inner_content)} %>
+    <div class="grid-rows-[auto_1fr] grid h-full">
+      <div>
+        <nav class="flex flex-row sm:hidden">
+          <a href="/"> Home </a>
+          <a href="/livebooks"> Livebooks </a>
+        </nav>
+      </div>
+      <div class="mx-auto max-w-7xl">
+        <%= {:safe, render(@inner_content)} %>
+      </div>
     </div>
     """
   end
