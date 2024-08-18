@@ -1813,7 +1813,16 @@ Kino.listen(
         instruction =
           Conversion.conversion_instruction(instruction_index)
 
-        model_code = Kino.Input.read(inputs.model_input)
+        model_code =
+          Kino.Input.read(inputs.model_input)
+          |> Kernel.then(fn code ->
+            """
+            ```
+            #{code}
+            ```
+            """
+          end)
+
         Kino.Frame.render(previous_model_frame, markdown(model_code))
 
         Kino.Frame.render(instruction_status, text("Running instruction"))
