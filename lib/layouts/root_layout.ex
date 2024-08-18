@@ -23,7 +23,7 @@ defmodule JoelKoch.Dev.RootLayout do
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
       </head>
 
-      <body class="min-h-dvh bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">
+      <body class="min-h-dvh grid-rows-[1fr_auto] grid bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">
         <main>
           <%= render(@inner_content) %>
         </main>
@@ -40,7 +40,7 @@ defmodule JoelKoch.Dev.RootLayout do
 
   def footer(assigns) do
     ~H"""
-    <footer class="relative bottom-0 mx-auto flex max-w-7xl flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-neutral-800 py-4 transition hover:border-white sm:flex-row">
+    <footer class="mx-auto flex w-full max-w-7xl flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-neutral-800 py-4 transition hover:border-white sm:flex-row">
       <span class="p-2">
         © 2024 Joël Koch
       </span>
