@@ -1033,6 +1033,7 @@ defmodule Conversion do
   @system_message system_message
   @instructions conversion_instructions
   @no_op_instruction "return unchanged code"
+  @template template
 
   def num_instructions, do: length(@instructions)
 
@@ -1089,11 +1090,9 @@ defmodule Conversion do
   end
 
   defp instruction_message(model_code, instruction) do
-    """
-    INSTRUCTION: #{instruction}
-    MODEL:
-    #{model_code}
-    """
+    prompt_inputs = Map.from_struct(instruction) |> Map.put(:model_code, model_code)
+
+    LangChain.PromptTemplate.format(@template, prompt_inputs)
   end
 
   def update_model(model_code, chain, instruction) do
@@ -1608,7 +1607,7 @@ num_instructions = Conversion.num_instructions()
 
 Kino.Frame.render(
   instruction_frame,
-  markdown("[0/#{num_instructions}] #{first_instruction}")
+  markdown("[0/#{num_instructions}] #{first_instruction.instruction}")
 )
 
 original_model_text = Kino.Input.textarea("Model Code", default: model, monospace: true)
@@ -1805,7 +1804,7 @@ Kino.listen(
 
         Kino.Frame.render(
           instruction_frame,
-          markdown("[#{num_instructions}/#{num_instructions}] #{last_instruction}")
+          markdown("[#{num_instructions}/#{num_instructions}] #{last_instruction.instruction}")
         )
 
         {:cont, {chain, %{inputs | model_input: model_input}, num_instructions}}
@@ -1838,7 +1837,7 @@ Kino.listen(
 
         Kino.Frame.render(
           instruction_frame,
-          markdown("[#{next_index}/#{num_instructions}] #{next_instruction}")
+          markdown("[#{next_index}/#{num_instructions}] #{next_instruction.instruction}")
         )
 
         Kino.Frame.render(instruction_status, text("Waiting for instruction"))
@@ -1858,7 +1857,7 @@ Kino.listen(
 
         Kino.Frame.render(
           instruction_frame,
-          markdown("[#{previous_index}/#{num_instructions}] #{previous_instruction}")
+          markdown("[#{previous_index}/#{num_instructions}] #{previous_instruction.instruction}")
         )
 
         {:cont, {chain, inputs, previous_index}}
@@ -1876,7 +1875,7 @@ Kino.listen(
 
         Kino.Frame.render(
           instruction_frame,
-          markdown("[#{next_index}/#{num_instructions}] #{next_instruction}")
+          markdown("[#{next_index}/#{num_instructions}] #{next_instruction.instruction}")
         )
 
         {:cont, {chain, inputs, next_index}}
