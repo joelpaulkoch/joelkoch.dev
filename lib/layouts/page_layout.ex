@@ -5,10 +5,15 @@ defmodule JoelKoch.Dev.PageLayout do
   def template(assigns) do
     ~H"""
     <div class="grid-rows-[auto_1fr] grid h-full">
-      <div>
-        <nav class="flex flex-row sm:hidden">
-          <a href="/"> Home </a>
-          <a href="/livebooks"> Livebooks </a>
+      <div class="p-4">
+        <nav class="hidden flex-row justify-end gap-2 text-xl sm:flex">
+          <a class="rounded-md p-2 underline ring-white transition hover:ring" href="/"> Home </a>
+          <a class="rounded-md p-2 underline ring-white transition hover:ring" href="/livebooks">
+            Livebooks
+          </a>
+          <a class="rounded-md p-2 underline ring-white transition hover:ring" href="/resume">
+            Resume
+          </a>
         </nav>
       </div>
       <div class="mx-auto max-w-7xl">
