@@ -25,19 +25,38 @@ defmodule JoelKoch.Dev.Components do
     """
   end
 
-  def nav_menu(assigns) do
+  def nav_bar(assigns) do
     ~H"""
-    <nav class="hidden flex-row justify-end gap-2 text-xl sm:flex">
-      <.ringlink link="/">
-        Home
-      </.ringlink>
-      <.ringlink link="/projects">
-        Projects
-      </.ringlink>
-      <.ringlink link="/resume">
-        Resume
-      </.ringlink>
-    </nav>
+    <div class="flex flex-row justify-end p-4">
+      <nav class="hidden flex-row justify-end gap-2 text-xl sm:flex">
+        <.ringlink link="/">Home</.ringlink>
+        <.ringlink link="/livebooks">Livebooks</.ringlink>
+        <.ringlink link="/resume">Resume</.ringlink>
+      </nav>
+
+      <button popovertarget="mobile-nav" class="justify-self-end sm:hidden">
+        <Heroicons.bars_3 class="size-8" />
+      </button>
+
+      <div
+        popover
+        id="mobile-nav"
+        class="h-full w-full bg-white text-black dark:bg-neutral-800 dark:text-neutral-200 sm:hidden"
+      >
+        <div class="grid-rows-[auto_1fr] size-full grid">
+          <div class="flex flex-row justify-end p-4">
+            <button popovertarget="mobile-nav" popovertargetaction="hide">
+              <Heroicons.bars_3 outline class="size-8" />
+            </button>
+          </div>
+          <nav class="flex flex-col place-content-center gap-6 text-center text-xl">
+            <.ringlink link="/">Home</.ringlink>
+            <.ringlink link="/livebooks">Livebooks</.ringlink>
+            <.ringlink link="/resume">Resume</.ringlink>
+          </nav>
+        </div>
+      </div>
+    </div>
     """
   end
 end
