@@ -27,7 +27,6 @@ defmodule JoelKoch.Dev.RootLayout do
         <main>
           <%= render(@inner_content) %>
         </main>
-        <.footer />
       </body>
 
       <%= if Mix.env() == :dev do %>
@@ -36,21 +35,5 @@ defmodule JoelKoch.Dev.RootLayout do
     </html>
     """
     |> Phoenix.HTML.Safe.to_iodata()
-  end
-
-  def footer(assigns) do
-    ~H"""
-    <footer class="mx-auto flex w-full max-w-7xl flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-neutral-800 py-4 transition hover:border-white sm:flex-row">
-      <span class="p-2">
-        © 2024 Joël Koch
-      </span>
-      <a
-        href="https://github.com/elixir-tools/tableau"
-        class="rounded-md p-2 underline ring-white transition hover:ring"
-      >
-        Built with Tableau
-      </a>
-    </footer>
-    """
   end
 end
