@@ -20,7 +20,6 @@ defmodule JoelKoch.Dev.RootLayout do
 
         <link rel="stylesheet" href="/css/app.css" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
       </head>
 
       <body class="min-h-dvh grid-rows-[1fr_auto] grid bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">
