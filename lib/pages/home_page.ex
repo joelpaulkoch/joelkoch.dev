@@ -16,7 +16,7 @@ defmodule JoelKoch.Dev.HomePage do
             src="https://www.gravatar.com/avatar/a7eb43bdf873c6edcb9d79b0acb21764a78c6983deabba6cbc7fae944645c63c?s=256"
           />
         </div>
-        <div class="max-w-80 col-span-2 mx-auto flex flex-col items-center gap-4 px-4 pt-4 sm:col-span-2 sm:max-w-full sm:items-start sm:gap-8">
+        <div class="max-w-80 mx-auto flex flex-col items-center gap-4 px-4 pt-4 sm:max-w-full sm:items-start sm:gap-8 lg:col-span-2">
           <h1 class="text-bold text-xl sm:text-5xl">
             This is me, Joël
           </h1>
