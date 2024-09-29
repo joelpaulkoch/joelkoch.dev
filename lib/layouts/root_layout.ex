@@ -22,10 +22,8 @@ defmodule JoelKoch.Dev.RootLayout do
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
 
-      <body class="min-h-dvh grid-rows-[1fr_auto] grid bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">
-        <main>
-          <%= render(@inner_content) %>
-        </main>
+      <body class="min-h-dvh bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">
+        <%= render(@inner_content) %>
       </body>
 
       <%= if Mix.env() == :dev do %>

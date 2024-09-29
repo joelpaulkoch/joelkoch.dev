@@ -7,9 +7,9 @@ defmodule JoelKoch.Dev.PageLayout do
     ~H"""
     <div class="grid-rows-[auto_1fr_auto] grid h-full">
       <.nav_bar />
-      <div class="prose prose-neutral mx-auto max-w-7xl p-4 dark:prose-invert">
+      <main class="prose prose-neutral mx-auto max-w-7xl p-4 dark:prose-invert">
         <%= {:safe, render(@inner_content)} %>
-      </div>
+      </main>
       <.footer />
     </div>
     """

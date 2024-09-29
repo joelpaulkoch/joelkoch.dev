@@ -27,7 +27,7 @@ defmodule JoelKoch.Dev.Components do
 
   def nav_bar(assigns) do
     ~H"""
-    <div class="flex flex-row justify-end p-4">
+    <div class="mx-auto flex w-full max-w-7xl flex-row justify-end p-4">
       <nav class="hidden flex-row justify-end gap-2 text-xl sm:flex">
         <.ringlink link="/">Home</.ringlink>
         <.ringlink link="/livebooks">Livebooks</.ringlink>
