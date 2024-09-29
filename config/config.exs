@@ -30,7 +30,7 @@ config :tableau, :config,
   url: "http://localhost:4999",
   markdown: [
     mdex: [
-      extension: [table: true, header_ids: "", tasklist: true, strikethrough: true],
+      extension: [table: false, header_ids: "", tasklist: true, strikethrough: true],
       render: [unsafe_: true],
       features: [syntax_highlight_theme: "onedark"]
     ]
