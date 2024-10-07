@@ -25,23 +25,17 @@ defmodule JoelKoch.Dev.HomePage do
               Happy to code for fun and a living.
             </p>
             <div class="self-end">
-              <a
-                href="https://github.com/joelpaulkoch"
-                class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-lime-600 transition hover:ring dark:ring-white sm:gap-4 sm:p-4"
-              >
+              <.ringlink link="https://github.com/joelpaulkoch">
                 <span> Checkout my GitHub profile </span>
                 <img src="/github-mark.svg" width="32" height="32" class="dark:hidden" />
                 <img src="/github-mark-white.svg" width="32" height="32" class="hidden dark:block" />
-              </a>
+              </.ringlink>
             </div>
             <div class="self-end">
-              <a
-                href="/resume"
-                class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-lime-600 transition hover:ring dark:ring-white sm:gap-4 sm:p-4"
-              >
+              <.ringlink link="/resume">
                 <span> ... or what I've done so far</span>
                 <Heroicons.document_text class="size-8" />
-              </a>
+              </.ringlink>
             </div>
           </div>
         </div>

@@ -20,7 +20,7 @@ defmodule JoelKoch.Dev.Components do
   def ringlink(assigns) do
     ~H"""
     <a
-      class="rounded-md p-2 underline ring-lime-600 transition hover:ring dark:ring-zinc-100"
+      class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-lime-600 transition hover:ring dark:ring-zinc-100"
       href={@link}
     >
       <%= render_slot(@inner_block) %>
@@ -52,7 +52,7 @@ defmodule JoelKoch.Dev.Components do
               <Heroicons.x_mark outline class="size-8" />
             </button>
           </div>
-          <nav class="flex flex-col place-content-center gap-6 text-center text-xl">
+          <nav class="flex flex-col items-center justify-center gap-8 text-xl">
             <.ringlink link="/">Home</.ringlink>
             <.ringlink link="/livebooks">Livebooks</.ringlink>
             <.ringlink link="/resume">Resume</.ringlink>
