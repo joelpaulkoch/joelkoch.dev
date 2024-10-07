@@ -4,6 +4,7 @@ defmodule JoelKoch.Dev.Error404 do
     permalink: "/404"
 
   use Phoenix.Component
+  import JoelKoch.Dev.Components
 
   def template(assigns) do
     ~H"""
@@ -12,12 +13,7 @@ defmodule JoelKoch.Dev.Error404 do
         This page does not exist.
       </p>
 
-      <a
-        href="/"
-        class="rounded-md p-2 underline ring-white transition hover:text-bold hover:decoration-2 hover:ring"
-      >
-        Go back to home.
-      </a>
+      <.ringlink link="/">Go back to home.</.ringlink>
     </div>
     """
   end

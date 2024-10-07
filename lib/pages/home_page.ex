@@ -27,7 +27,7 @@ defmodule JoelKoch.Dev.HomePage do
             <div class="self-end">
               <a
                 href="https://github.com/joelpaulkoch"
-                class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-white transition hover:ring sm:gap-4 sm:p-4"
+                class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-lime-600 transition hover:ring dark:ring-white sm:gap-4 sm:p-4"
               >
                 <span> Checkout my GitHub profile </span>
                 <img src="/github-mark.svg" width="32" height="32" class="dark:hidden" />
@@ -37,7 +37,7 @@ defmodule JoelKoch.Dev.HomePage do
             <div class="self-end">
               <a
                 href="/resume"
-                class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-white transition hover:ring sm:gap-4 sm:p-4"
+                class="flex flex-row items-center gap-2 rounded-md p-2 underline ring-lime-600 transition hover:ring dark:ring-white sm:gap-4 sm:p-4"
               >
                 <span> ... or what I've done so far</span>
                 <Heroicons.document_text class="size-8" />
@@ -51,9 +51,9 @@ defmodule JoelKoch.Dev.HomePage do
           </a>
         </div>
       </div>
-      <div id="livebooks" class="bg-neutral-900 py-16">
+      <div id="livebooks" class="bg-zinc-200 py-16 dark:bg-zinc-700">
         <div class="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2">
-          <div class="row-span-2 rounded-xl bg-white p-4 dark:bg-neutral-800">
+          <div class="row-span-2 rounded-xl bg-white p-4 dark:bg-zinc-800">
             <h2 class="bold text-xl">
               Livebook Action
             </h2>
@@ -61,7 +61,7 @@ defmodule JoelKoch.Dev.HomePage do
               I've done this thing
             </p>
           </div>
-          <div class="s-32 row-span-2 grid grid-cols-3 rounded-xl bg-white p-4 ring-white transition hover:ring dark:bg-neutral-800 sm:col-start-2 sm:row-start-2">
+          <div class="s-32 row-span-2 grid grid-cols-3 rounded-xl bg-white p-4 ring-lime-600 transition hover:ring dark:bg-zinc-800 dark:ring-white sm:col-start-2 sm:row-start-2">
             <div class="col-span-2">
               <a href="/livebookthing">
                 <h2 class="bold text-xl">
@@ -78,7 +78,7 @@ defmodule JoelKoch.Dev.HomePage do
               </a>
             </div>
           </div>
-          <div class="s-32 row-span-2 rounded-xl bg-white p-4 dark:bg-neutral-800">
+          <div class="s-32 row-span-2 rounded-xl bg-white p-4 dark:bg-zinc-800">
             <h2 class="bold text-xl">
               Livebook Action
             </h2>

@@ -22,7 +22,7 @@ defmodule JoelKoch.Dev.RootLayout do
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
 
-      <body class="min-h-dvh bg-white text-black antialiased dark:bg-neutral-800 dark:text-neutral-200">
+      <body class="min-h-dvh bg-zinc-100 text-zinc-800 antialiased dark:bg-zinc-800 dark:text-zinc-100">
         <%= render(@inner_content) %>
       </body>
 

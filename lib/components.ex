@@ -3,7 +3,7 @@ defmodule JoelKoch.Dev.Components do
 
   def footer(assigns) do
     ~H"""
-    <footer class="mx-auto flex w-full max-w-7xl flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-neutral-800 py-4 transition hover:border-white sm:flex-row">
+    <footer class="mx-auto flex w-full max-w-7xl flex-col-reverse items-center justify-center gap-4 border-t-2 border-solid border-zinc-100 py-4 transition hover:border-lime-600 dark:border-zinc-800 dark:hover:border-zinc-100 sm:flex-row">
       <span class="p-2">
         © 2024 Joël Koch
       </span>
@@ -19,7 +19,10 @@ defmodule JoelKoch.Dev.Components do
 
   def ringlink(assigns) do
     ~H"""
-    <a class="rounded-md p-2 underline ring-white transition hover:ring" href={@link}>
+    <a
+      class="rounded-md p-2 underline ring-lime-600 transition hover:ring dark:ring-zinc-100"
+      href={@link}
+    >
       <%= render_slot(@inner_block) %>
     </a>
     """
@@ -41,7 +44,7 @@ defmodule JoelKoch.Dev.Components do
       <div
         popover
         id="mobile-nav"
-        class="h-full w-full bg-white p-0 text-black dark:bg-neutral-800 dark:text-neutral-200 sm:hidden"
+        class="h-full w-full bg-zinc-100 p-0 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100 sm:hidden"
       >
         <div class="grid-rows-[auto_1fr] size-full grid ">
           <div class="flex flex-row justify-end p-4">
