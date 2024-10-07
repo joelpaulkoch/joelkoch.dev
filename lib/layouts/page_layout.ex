@@ -5,7 +5,7 @@ defmodule JoelKoch.Dev.PageLayout do
 
   def template(assigns) do
     ~H"""
-    <div class="grid-rows-[auto_1fr_auto] grid h-full gap-4">
+    <div class="grid-rows-[auto_1fr_auto] min-h-dvh grid gap-4">
       <.nav_bar />
       <main class="prose prose-neutral mx-auto max-w-7xl p-4 dark:prose-invert">
         <%= {:safe, render(@inner_content)} %>
