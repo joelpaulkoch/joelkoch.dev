@@ -41,12 +41,12 @@ defmodule JoelKoch.Dev.Components do
       <div
         popover
         id="mobile-nav"
-        class="h-full w-full bg-white text-black dark:bg-neutral-800 dark:text-neutral-200 sm:hidden"
+        class="h-full w-full bg-white p-0 text-black dark:bg-neutral-800 dark:text-neutral-200 sm:hidden"
       >
-        <div class="grid-rows-[auto_1fr] size-full grid">
+        <div class="grid-rows-[auto_1fr] size-full grid ">
           <div class="flex flex-row justify-end p-4">
             <button popovertarget="mobile-nav" popovertargetaction="hide">
-              <Heroicons.bars_3 outline class="size-8" />
+              <Heroicons.x_mark outline class="size-8" />
             </button>
           </div>
           <nav class="flex flex-col place-content-center gap-6 text-center text-xl">
