@@ -9,35 +9,53 @@ layout: JoelKoch.Dev.PageLayout
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Software Developer</div> <div class="justify-self-end">since July 2024</div></div>
 
-In a small team that built a new project in the medical space from scratch I worked on the **Elixir** backend. 
-We used **Phoenix** as a web framework, of course, including **Oban** for mailing, **Ecto** for everything data related, **LiveView** for our admin interface, and **Absinthe** for the GraphQL API.
+### What I worked on
+We built a new project in the medical space from scratch, I worked on the **Elixir** backend. 
+
+### What I learned
+- how to structure projects properly, which responsibility we address in which layer
+- **Phoenix** as a web framework, **LiveView** for our admin interface and **Absinthe** for a GraphQL API 
+- how to schedule mails using **Oban** and a lot about handling data with **Ecto**
+- how to implement a two-factor authentication system
 
 ## osapiens
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Software Development Engineer</div> <div class="justify-self-end">July 2023 – Dec 2023</div></div>
 
-I worked on the backend of SaaS product for supply chain regulation in TypeScript.
-Developed a telemetry system for metrics and business events for internal analysis, defined data schemas, implemented workers to gather and APIs to access data, documented the system
-Implemented backend for admin page to enable the support team to resolve issues with account registration and activation without directly modifying the database
-Developed CLI tool for JSON-to-CSV to export existing string values and import their translations provided by an agency
+### What I worked on
+We built a SaaS product for supply chain regulation, I worked on the **TypeScript** backend.
+
+### What I learned
+- how to work with a custom cloud platform that's kind of undocumented
+- how to do data migrations in complex production setups
 
 ## Treye Tech
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Working Student</div> <div class="justify-self-end">Mar 2020 – Aug 2022</div></div>
 
-I developed an accessibility tool for gaze control of Windows computers requiring only a webcam in C++ using OpenCV.
-Designed and implemented system from the very beginning together with the founder, from a single file operating at 8 frames per second to running subsystems concurrently at 30 FPS  
-Introduced CMake as build system and a custom Docker image to set up CI on Bitbucket to maintain a working state on the main branch
-Replaced OpenCV based tracking of facial features with a model from Google’s MediaPipe to keep track when the user’s head turns which enabled using the software as head control
+### What I worked on
+We developed an accessibility tool for gaze control of Windows computers from scratch.
+The tool requires only a regular webcam, which makes it stand out among competitors.
+We built on top of **OpenCV** and developed in **C++**.
+
+### What I learned
+- a lot about **C++** and **OpenCV**
+- a lot about build systems, **CMake** in particular
+- how to work with **Docker** and set up a **CI** pipeline
+- how to improve performance with concurrency, we went from 8 frames per seconds to 30, the limit of the webcam
 
 ## Caterpillar Energy Solutions
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Working Student</div> <div class="justify-self-end">Nov 2018 – Nov 2019</div></div>
 
-I ported a remote control tool for gas turbine control simulation test stand from Python to C# to integrate with existing software testing systems.
+### What I worked on
+I ported a remote control tool for a gas turbine control simulation test stand from **Python** to **C#** to integrate with existing software testing systems.
+
+### What I learned
+- how to apply software patterns
+- testing is an extremely important part of software development
 
 ---
-
 
 # Projects
 
@@ -45,16 +63,29 @@ I ported a remote control tool for gas turbine control simulation test stand fro
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Startup Workshop</div> <div class="justify-self-end">Mar 2024</div></div>
 
-Ported DINOv2 and ControlNet models from Python to Elixir (github.com/elixir-nx/bumblebee)
+### What I worked on
+
+I worked on a virtual try-on product for fashion.
+
+### What I learned
+
+- how to port ML models from **Python** to **Elixir** (ported DINOv2 and Stable Diffusion ControlNet models)
+- how to get access to GPUs
 
 ## Schildpad
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Android Launcher App</div> <div class="justify-self-end">June 2022 – Oct 2023</div></div>
 
-I've developed an Android launcher app with Flutter [github.com/joelpaulkoch/schildpad](https://github.com/joelpaulkoch/schildpad) and published the app to the Google Play Store.
+### What I worked on
+
+I've developed an Android launcher app with **Flutter**: [github.com/joelpaulkoch/schildpad](https://github.com/joelpaulkoch/schildpad)
+
+### What I learned
+- how to build apps in **Flutter**
+- how to make use of native interop
+- how to publish an app in an app store
 
 ---
-
 
 # Education
 
@@ -62,25 +93,56 @@ I've developed an Android launcher app with Flutter [github.com/joelpaulkoch/sch
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>M. Sc. Management of Technology</div> <div class="justify-self-end">Sept 2020 – Apr 2023</div></div>
 
-Thesis: Switching from Open Source to Cloud Protection License: What is the impact on Community Health?
+
+### What is it about
+A really diverse study program, that's at the intersection of technology and sociology.
+It has three different levels:
+
+First, an abstract, scientific view on technology.
+Here, we learned how technologies evolve, how standards emerge, why we're still not all driving in eletric cars, and that there has been a quite similar transition phase in history when steamships coexisted with sailing ships.
+
+Second, technology and innovation from a company's perspective.
+This part is about how to select technologies and how to organize to employ them in an innovative way.
+
+Last, technology and innovation from a government's perspective.
+We studied how governments can foster innovation and protect niche technologies to help companies capture the markets of the future.
+It's also about technological clusters and their impact on societies.
+
+My thesis: _Switching from Open Source to Cloud Protection License: What is the impact on Community Health?_
 
 ## Technion
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Semester Abroad</div> <div class="justify-self-end">Sept 2020 – Apr 2023</div></div>
 
-Courses:
 
+### What is it about
+
+Courses
 - Computational Geometry
 - Digital Image Processing
+- History of the Middle East
 
 ## TU Munich
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>B. Sc. Informatics</div> <div class="justify-self-end">Oct 2016 – Aug 2020</div></div>
 
-Thesis: Structuring Large Sensor Data from Wind Turbines for Analysis and Visualization (in Python)
+
+### What is it about
+All the basics of computer science.
+- how compilers, databases and operating systems work
+- how the internet works
+- some maths
+
+My thesis: _Structuring Large Sensor Data from Wind Turbines for Analysis and Visualization_ (in **Python**)
 
 ## TU Munich
 
 <div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>B. Sc. Mechanical Engineering</div> <div class="justify-self-end">Oct 2014 – June 2018</div></div>
 
-Thesis: Applications of Remote Control in New Space
+### What is it about
+All the basics of mechanical engineering.
+- how to calculate the stability of structures
+- how to make sense of technical drawings, and make them yourself
+- some maths, some electronics, some information technologies
+
+My thesis: _Applications of Remote Control in New Space_
