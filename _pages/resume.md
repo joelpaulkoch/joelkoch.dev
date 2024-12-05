@@ -7,7 +7,7 @@ layout: JoelKoch.Dev.PageLayout
 
 ## bitcrowd
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Software Developer</div> <div class="justify-self-end">since July 2024</div></div>
+Software Developer, since July 2024
 
 ### What I worked on
 We built a new project in the medical space from scratch, I worked on the **Elixir** backend. 
@@ -20,7 +20,7 @@ We built a new project in the medical space from scratch, I worked on the **Elix
 
 ## osapiens
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Software Development Engineer</div> <div class="justify-self-end">July 2023 – Dec 2023</div></div>
+Software Development Engineer, July 2023 – Dec 2023
 
 ### What I worked on
 We built a SaaS product for supply chain regulation, I worked on the **TypeScript** backend.
@@ -31,7 +31,7 @@ We built a SaaS product for supply chain regulation, I worked on the **TypeScrip
 
 ## Treye Tech
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Working Student</div> <div class="justify-self-end">Mar 2020 – Aug 2022</div></div>
+Working Student, Mar 2020 – Aug 2022
 
 ### What I worked on
 We developed an accessibility tool for gaze control of Windows computers from scratch.
@@ -46,7 +46,7 @@ We built on top of **OpenCV** and developed in **C++**.
 
 ## Caterpillar Energy Solutions
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Working Student</div> <div class="justify-self-end">Nov 2018 – Nov 2019</div></div>
+Working Student, Nov 2018 – Nov 2019
 
 ### What I worked on
 I ported a remote control tool for a gas turbine control simulation test stand from **Python** to **C#** to integrate with existing software testing systems.
@@ -61,7 +61,7 @@ I ported a remote control tool for a gas turbine control simulation test stand f
 
 ## Thincubator
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Startup Workshop</div> <div class="justify-self-end">Mar 2024</div></div>
+Startup Workshop, Mar 2024
 
 ### What I worked on
 
@@ -74,7 +74,7 @@ I worked on a virtual try-on product for fashion.
 
 ## Schildpad
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Android Launcher App</div> <div class="justify-self-end">June 2022 – Oct 2023</div></div>
+Android Launcher App, June 2022 – Oct 2023
 
 ### What I worked on
 
@@ -91,7 +91,7 @@ I've developed an Android launcher app with **Flutter**: [github.com/joelpaulkoc
 
 ## TU Delft
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>M. Sc. Management of Technology</div> <div class="justify-self-end">Sept 2020 – Apr 2023</div></div>
+M. Sc. Management of Technology, Sept 2020 – Apr 2023
 
 
 ### What is it about
@@ -112,7 +112,7 @@ My thesis: _Switching from Open Source to Cloud Protection License: What is the 
 
 ## Technion
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>Semester Abroad</div> <div class="justify-self-end">Sept 2020 – Apr 2023</div></div>
+Semester Abroad, Sept 2020 – Apr 2023
 
 
 ### What is it about
@@ -124,7 +124,7 @@ Courses
 
 ## TU Munich
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>B. Sc. Informatics</div> <div class="justify-self-end">Oct 2016 – Aug 2020</div></div>
+B. Sc. Informatics, Oct 2016 – Aug 2020
 
 
 ### What is it about
@@ -137,7 +137,7 @@ My thesis: _Structuring Large Sensor Data from Wind Turbines for Analysis and Vi
 
 ## TU Munich
 
-<div class="grid grid-cols-1 gap-1 py-0 sm:grid-cols-2"><div>B. Sc. Mechanical Engineering</div> <div class="justify-self-end">Oct 2014 – June 2018</div></div>
+B. Sc. Mechanical Engineering, Oct 2014 – June 2018
 
 ### What is it about
 All the basics of mechanical engineering.

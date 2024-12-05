@@ -1,0 +1,11 @@
+/* based on https://piccalil.li/blog/how-i-build-a-button-component/ */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+
+  background: transparent;
+  border-style: none;
+
+  cursor: pointer;
+}

@@ -12,17 +12,22 @@ config :web_dev_utils, :reload_log, true
 # uncomment this if you use something like ngrok
 # config :web_dev_utils, :reload_url, "'wss://' + location.host + '/ws'"
 
-config :tailwind,
-  version: "3.4.4",
+config :lightning_css,
+  version: "1.22.1",
   default: [
-    args: ~w(
-    --config=assets/tailwind.config.js
-    --input=assets/css/app.css
-    --output=_site/css/app.css
-    )
+    args: [
+      "assets/css/app.css",
+      "--bundle",
+      "--targets",
+      ">= 0.25%",
+      "--output-file",
+      "_site/css/app.css"
+    ],
+    watch_files: "assets/css/**/*.css"
   ]
 
-config :tableau, :assets, tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}
+config :tableau, :assets,
+  lightning_css: {LightningCSS, :install_and_run, [:default, ~w(), [watch: true]]}
 
 config :tableau, :config, include_dir: "extra"
 
@@ -45,13 +50,6 @@ config :tableau, Tableau.RSSExtension,
   enabled: true,
   title: "joelkoch.dev",
   description: "My personal website"
-
-config :tableau, JoelKoch.Dev.LivebooksExtension,
-  enabled: true,
-  layout: "JoelKoch.Dev.LivebookLayout",
-  dir: "_livebooks",
-  livebooks_root: "https://github.com/joelpaulkoch/joelkoch.dev/blob/main/",
-  discussions_url: "https://github.com/joelpaulkoch/joelkoch.dev/discussions"
 
 config :elixir, :time_zone_database, Tz.TimeZoneDatabase
 

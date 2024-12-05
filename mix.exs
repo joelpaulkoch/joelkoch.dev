@@ -22,17 +22,16 @@ defmodule JoelKoch.Dev.MixProject do
 
   def aliases() do
     [
-      build: ["tableau.build", "tailwind default --minify"]
+      build: ["tableau.build", "lightning_css default"]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:tableau, "~> 0.15"},
-      {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
-      {:tailwind_formatter, "~> 0.4", only: [:dev, :test], runtime: false},
-      {:phoenix_live_view, "~> 0.20"},
+      {:tableau, "~> 0.20"},
+      {:lightning_css, "~> 0.5"},
+      {:phoenix_live_view, "~> 1.0"},
       {:heroicons, "~> 0.5"}
     ]
   end

@@ -1,0 +1,33 @@
+/* based on https://smolcss.dev/#smol-card-component */
+
+.card {
+  display: flex;
+  flex-direction: column;
+
+  gap: var(--s0);
+  max-inline-size: 30ch;
+
+  box-shadow: 0 0 0.5rem hsl(0 0% 0% / 35%);
+  border-radius: 0.5rem;
+
+  background-color: var(--background-color);
+
+  > :not(img) {
+    margin-inline: 1rem;
+
+    /* Prevent typography "orphans" */
+    text-wrap: pretty;
+  }
+
+  > :not(img):first-child {
+    margin-block: 1rem;
+  }
+
+  > :last-of-type:not(img, h2, h3, h4) {
+    margin-bottom: 1rem;
+  }
+
+  > a {
+    align-self: start;
+  }
+}

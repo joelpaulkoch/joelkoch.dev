@@ -1,3 +1,10 @@
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+/* @layer reset, theme, layout, utilities, blocks; */
+
+@import "./reset.css";
+@import "./global.css";
+@import "./layout.css";
+@import "./button.css";
+@import "./card.css";
+@import "./navigation.css";
+@import "./footer.css";
+@import "./utilities.css";

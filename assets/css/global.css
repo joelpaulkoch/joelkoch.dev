@@ -1,0 +1,75 @@
+:root {
+  --brand-color: oklch(75% 0.2 100);
+  --swatch-1: oklch(from var(--brand-color) 0.99 0.02 h);
+  --swatch-2: oklch(from var(--brand-color) 0.8 0.1 h);
+  --swatch-3: oklch(from var(--brand-color) 0.6 0.15 h);
+  --swatch-4: oklch(from var(--brand-color) 0.3 0.01 h);
+
+  --background-color: light-dark(var(--swatch-1), var(--swatch-4));
+  --background-highlight-color: light-dark(var(--swatch-2), var(--swatch-3));
+  --text-color: light-dark(var(--swatch-4), var(--swatch-1));
+  --accent-color: var(--brand-color);
+
+  --font-base: ui-sans-serif, system-ui, sans-serif, Apple Color Emoji,
+    Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+
+  --ratio: 1.5;
+  --s-5: calc(var(--s0) / pow(var(--ratio), 5));
+  --s-4: calc(var(--s0) / pow(var(--ratio), 4));
+  --s-3: calc(var(--s0) / pow(var(--ratio), 3));
+  --s-2: calc(var(--s0) / pow(var(--ratio), 2));
+  --s-1: calc(var(--s0) / pow(var(--ratio), 1));
+  --s0: 1rem;
+  --s1: calc(var(--s0) * pow(var(--ratio), 1));
+  --s2: calc(var(--s0) * pow(var(--ratio), 2));
+  --s3: calc(var(--s0) * pow(var(--ratio), 3));
+  --s4: calc(var(--s0) * pow(var(--ratio), 4));
+  --s5: calc(var(--s0) * pow(var(--ratio), 5));
+
+  --measure: 65ch;
+  --line-height: var(--ratio);
+  --line-height-small: calc(0.8 * var(--ratio));
+  --border-thin: var(--s-5);
+  --border-thick: var(--s-2);
+}
+
+::selection {
+  background-color: var(--accent-color);
+}
+
+html {
+  color-scheme: light dark;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  scroll-behavior: smooth;
+
+  line-height: var(--line-height);
+  font-size: calc(0.333vw + 1em);
+}
+
+* {
+  max-inline-size: var(--measure);
+}
+
+html,
+body,
+div,
+header,
+nav,
+main,
+footer {
+  max-inline-size: none;
+}
+
+body {
+  font-family: var(--font-base);
+}
+
+a {
+  text-decoration-color: var(--accent-color);
+}
+
+img {
+  block-size: auto;
+  object-fit: contain;
+}

@@ -22,7 +22,7 @@ defmodule JoelKoch.Dev.LivebookLayout do
       </div>
     </div>
     <article class="grid prose-pre:overflow-x-auto">
-      <%= {:safe, render(@inner_content)} %>
+      {{:safe, render(@inner_content)}}
     </article>
     """
   end
