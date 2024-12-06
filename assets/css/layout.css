@@ -49,6 +49,10 @@
   }
 }
 
+.flow > * + * {
+  margin-top: var(--flow-space, 1em);
+}
+
 .grid {
   --min: 25ch;
   --gap: 1rem;

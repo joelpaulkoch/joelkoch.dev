@@ -62,7 +62,7 @@ defmodule JoelKoch.Dev.HomePage do
             </ol>
           </div>
         </div>
-        <a href="#content" class="center" aria-label="Scroll down">
+        <a href="#content" class="center transitions rise" aria-label="Scroll down">
           <Heroicons.chevron_down
             class="icon | font-size:s4 accent-color"
             width="2.5em"

@@ -67,6 +67,10 @@ body {
 
 a {
   text-decoration-color: var(--accent-color);
+
+  &:hover {
+    text-decoration-thickness: var(--s-5);
+  }
 }
 
 img {
