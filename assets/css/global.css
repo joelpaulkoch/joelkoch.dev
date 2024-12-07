@@ -57,7 +57,8 @@ div,
 header,
 nav,
 main,
-footer {
+footer,
+ul {
   max-inline-size: none;
 }
 
