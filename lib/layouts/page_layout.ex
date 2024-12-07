@@ -5,12 +5,12 @@ defmodule JoelKoch.Dev.PageLayout do
 
   def template(assigns) do
     ~H"""
-    <div class="header-main-footer wrapper">
+    <div class="header-main-footer">
       <.header />
-      <main class="flow">
+      <main class="flow wrapper">
         {{:safe, render(@inner_content)}}
       </main>
-      <.footer />
+      <.footer class="wrapper" />
     </div>
     """
   end

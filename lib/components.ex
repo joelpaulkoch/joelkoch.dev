@@ -19,7 +19,7 @@ defmodule JoelKoch.Dev.Components do
   def header(assigns) do
     ~H"""
     <header class={["cluster | nav | justify-content:flex-end", @class]}>
-      <nav>
+      <nav class="wrapper">
         <ul role="list" class="cluster">
           <li>
             <a href="/">Home</a>
