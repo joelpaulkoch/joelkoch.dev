@@ -72,15 +72,32 @@ defmodule JoelKoch.Dev.HomePage do
       </div>
       <div id="content" class="box | background-highlight">
         <ul role="list" class="cluster">
-          <li>
-            <.card
-              title="How to use Jina embeddings in Elixir with Bumblebee"
-              link="https://bitcrowd.dev/how-to-run-jina-embeddings-in-elixir/"
-            >
+          <li :for={content <- @data["external_content"]} :if={content["on_home"]}>
+            <.card title={content["title"]} link={content["link"]}>
               <p>
-                This is me, writing about how to take an existing Python ML model and implement it in Elixir.
+                {content["summary"]}
               </p>
             </.card>
+          </li>
+
+          <li :for={page <- @pages} :if={page[:on_home]}>
+            <.card title={page.title} link={page.permalink}>
+              <p>
+                {page.summary}
+              </p>
+            </.card>
+          </li>
+
+          <li :for={post <- @posts} :if={post[:on_home]}>
+            <.card title={post.title} link={post.permalink}>
+              <p>
+                {post.summary}
+              </p>
+            </.card>
+          </li>
+
+          <li>
+            <.card link="/content" link_text="Show more" />
           </li>
         </ul>
       </div>

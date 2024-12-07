@@ -54,8 +54,9 @@ defmodule JoelKoch.Dev.Components do
     """
   end
 
-  attr(:title, :string, required: true)
-  attr(:link, :string, required: true)
+  attr(:title, :string)
+  attr(:link, :string)
+  attr(:link_text, :string, default: "Read more")
   attr(:class, :string, default: nil)
 
   slot(:inner_block)
@@ -63,9 +64,9 @@ defmodule JoelKoch.Dev.Components do
   def card(assigns) do
     ~H"""
     <article class={["card", @class]}>
-      <h2>{@title}</h2>
+      <h2 :if={assigns[:title]}>{@title}</h2>
       {render_slot(@inner_block)}
-      <a href={@link}> Read more </a>
+      <a :if={assigns[:link]} href={@link}>{@link_text}</a>
     </article>
     """
   end

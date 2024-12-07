@@ -4,6 +4,7 @@ config :tableau, :reloader,
   patterns: [
     ~r"lib/.*.ex",
     ~r"(_posts|_pages)/.*.md",
+    ~r"(_data)/.*.yaml",
     ~r"livebooks/.*.livemd",
     ~r"assets/.*.(css|js)"
   ]
@@ -33,6 +34,7 @@ config :tableau, :config, include_dir: "extra"
 
 config :tableau, :config,
   url: "http://localhost:4999",
+  timezone: "Europe/Berlin",
   markdown: [
     mdex: [
       extension: [table: false, header_ids: "", tasklist: true, strikethrough: true],
