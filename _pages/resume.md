@@ -57,36 +57,6 @@ I ported a remote control tool for a gas turbine control simulation test stand f
 
 ---
 
-# Projects
-
-## Thincubator
-
-Startup Workshop, Mar 2024
-
-### What I worked on
-
-I worked on a virtual try-on product for fashion.
-
-### What I learned
-
-- how to port ML models from **Python** to **Elixir** (ported DINOv2 and Stable Diffusion ControlNet models)
-- how to get access to GPUs
-
-## Schildpad
-
-Android Launcher App, June 2022 – Oct 2023
-
-### What I worked on
-
-I've developed an Android launcher app with **Flutter**: [github.com/joelpaulkoch/schildpad](https://github.com/joelpaulkoch/schildpad)
-
-### What I learned
-- how to build apps in **Flutter**
-- how to make use of native interop
-- how to publish an app in an app store
-
----
-
 # Education
 
 ## TU Delft
