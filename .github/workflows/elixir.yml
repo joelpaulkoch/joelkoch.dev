@@ -30,6 +30,14 @@ jobs:
       run: mix deps.get --only prod
     - name: Build site
       run: MIX_ENV=prod mix build
+    - name: Hyperlink link checker
+      uses: untitaker/hyperlink@0.1.43
+      with:
+        args: _site/ --sources _pages/
+    - name: typos-action
+      uses: crate-ci/typos@v1.28.2
+      with:
+        files: _site/
     - name: Upload site artifact
       uses: actions/upload-pages-artifact@v3
   
