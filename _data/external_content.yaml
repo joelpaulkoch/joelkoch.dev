@@ -2,3 +2,7 @@
   link: "https://bitcrowd.dev/how-to-run-jina-embeddings-in-elixir/"
   summary: "This is me, writing about how to take an existing Python ML model and implement it in Elixir."
   on_home: true
+- title: "A RAG for Elixir in Elixir"
+  link: "https://bitcrowd.dev/a-rag-for-elixir-in-elixir"
+  summary: "We built our local RAG system for Elixir in Python. It couldn't stay this way, so I rebuilt it in Elixir."
+  on_home: false
