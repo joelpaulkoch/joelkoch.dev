@@ -1,5 +1,6 @@
 - title: "How to use Jina embeddings in Elixir with Bumblebee"
   link: "https://bitcrowd.dev/how-to-run-jina-embeddings-in-elixir/"
+  image: "/images/jina.webp"
   summary: "This is me, writing about how to take an existing Python ML model and implement it in Elixir."
   on_home: true
 - title: "A RAG for Elixir in Elixir"
