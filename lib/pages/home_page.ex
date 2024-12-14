@@ -73,31 +73,42 @@ defmodule JoelKoch.Dev.HomePage do
       <div id="content" class="box | background-highlight">
         <ul role="list" class="cluster">
           <li :for={content <- @data["external_content"]} :if={content["on_home"]}>
-            <.card title={content["title"]} link={content["link"]}>
+            <.card>
+              <img src={content["image"]} alt="" width="256" height="256" />
+              <h2>{content["title"]}</h2>
               <p>
                 {content["summary"]}
               </p>
+              <a href={content["link"]}> Read more </a>
             </.card>
           </li>
 
           <li :for={page <- @pages} :if={page[:on_home]}>
-            <.card title={page.title} link={page.permalink}>
+            <.card>
+              <img :if={page[:image]} src={page.image} alt="" width="256" height="256" />
+              <h2>{page.title}</h2>
               <p>
                 {page.summary}
               </p>
+              <a href={page.permalink}> Read more </a>
             </.card>
           </li>
 
           <li :for={post <- @posts} :if={post[:on_home]}>
-            <.card title={post.title} link={post.permalink}>
+            <.card>
+              <img :if={post[:image]} src={post.image} alt="" width="256" height="256" />
+              <h2>{post.title}</h2>
               <p>
                 {post.summary}
               </p>
+              <a href={post.permalink}> Read more </a>
             </.card>
           </li>
 
           <li>
-            <.card link="/content" link_text="Show more" />
+            <.card>
+              <a href="/content"> Show more </a>
+            </.card>
           </li>
         </ul>
       </div>

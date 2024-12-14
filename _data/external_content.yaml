@@ -4,5 +4,6 @@
   on_home: true
 - title: "A RAG for Elixir in Elixir"
   link: "https://bitcrowd.dev/a-rag-for-elixir-in-elixir"
+  image: "/images/a_rag_for_elixir_in_elixir.webp"
   summary: "We built our local RAG system for Elixir in Python. It couldn't stay this way, so I rebuilt it in Elixir."
   on_home: false
