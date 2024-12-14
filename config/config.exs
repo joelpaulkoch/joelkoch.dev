@@ -6,7 +6,7 @@ config :tableau, :reloader,
     ~r"(_posts|_pages)/.*.md",
     ~r"(_data)/.*.yaml",
     ~r"livebooks/.*.livemd",
-    ~r"assets/.*.(css|js)"
+    ~r"_site/css/*"
   ]
 
 config :web_dev_utils, :reload_log, true
@@ -14,7 +14,7 @@ config :web_dev_utils, :reload_log, true
 # config :web_dev_utils, :reload_url, "'wss://' + location.host + '/ws'"
 
 config :lightning_css,
-  version: "1.22.1",
+  version: "1.28.2",
   default: [
     args: [
       "assets/css/app.css",
@@ -24,7 +24,7 @@ config :lightning_css,
       "--output-file",
       "_site/css/app.css"
     ],
-    watch_files: "assets/css/**/*.css"
+    watch_files: "assets/css/"
   ]
 
 config :tableau, :assets,
