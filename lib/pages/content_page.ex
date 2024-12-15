@@ -14,7 +14,7 @@ defmodule JoelKoch.Dev.ContentPage do
     <h1 id="articles">Articles</h1>
     <ul role="list" class="cluster">
       <li :for={page <- @pages} :if={page[:content]}>
-        <.card class="background-highlight">
+        <.card>
           <img :if={page[:image]} src={page.image} alt="" width="256" height="256" />
           <h2>{page.title}</h2>
           <p>
@@ -28,7 +28,7 @@ defmodule JoelKoch.Dev.ContentPage do
     <h1 id="external-content">External Content</h1>
     <ul role="list" class="cluster">
       <li :for={content <- @data["external_content"]}>
-        <.card class="background-highlight">
+        <.card>
           <img src={content["image"]} alt="" width="256" height="256" />
           <h2>{content["title"]}</h2>
           <p>
@@ -42,7 +42,7 @@ defmodule JoelKoch.Dev.ContentPage do
     <h1 id="devlogs">Devlogs</h1>
     <ul role="list" class="cluster">
       <li :for={post <- @posts} class="transitions zoom">
-        <.card class="background-highlight">
+        <.card>
           <img :if={post[:image]} src={post.image} alt="" width="256" height="256" />
           <h2>{post.title}</h2>
           <p>
