@@ -93,3 +93,8 @@ textarea:not([rows]) {
 :target {
   scroll-margin-block: 5ex;
 }
+
+/* Remove blockquote margin */
+blockquote {
+  margin: 0;
+}

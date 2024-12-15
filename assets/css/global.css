@@ -78,3 +78,20 @@ img {
   block-size: auto;
   object-fit: contain;
 }
+
+blockquote {
+  border-inline-start: var(--s-4) solid var(--accent-color);
+  padding-inline-start: var(--s0);
+}
+
+blockquote > p::before {
+  color: var(--accent-color);
+  content: open-quote;
+  margin-inline-end: var(--s-5);
+}
+
+blockquote > p::after {
+  color: var(--accent-color);
+  content: close-quote;
+  margin-inline-start: var(--s-5);
+}
