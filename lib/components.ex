@@ -32,25 +32,7 @@ defmodule JoelKoch.Dev.Components do
           </li>
         </ul>
       </nav>
-
-      <button popovertarget="mobile-nav" class="button">
-        <Heroicons.bars_3 outline class="icon" />
-      </button>
     </header>
-
-    <nav popover="auto" id="mobile-nav" class="center | mobile-nav | radius">
-      <ul role="list">
-        <li>
-          <a href="/">Home</a>
-        </li>
-        <li>
-          <a href="/content">Content</a>
-        </li>
-        <li>
-          <a href="/resume">Resume</a>
-        </li>
-      </ul>
-    </nav>
     """
   end
 
