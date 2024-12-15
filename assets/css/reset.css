@@ -95,6 +95,8 @@ textarea:not([rows]) {
 }
 
 /* Remove blockquote margin */
-blockquote {
+blockquote,
+ol,
+ul {
   margin: 0;
 }
