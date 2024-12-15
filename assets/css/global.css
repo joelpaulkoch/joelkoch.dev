@@ -72,6 +72,11 @@ a {
   &:hover {
     text-decoration-thickness: var(--s-5);
   }
+
+  &:link,
+  &:visited {
+    color: var(--text-color);
+  }
 }
 
 img {

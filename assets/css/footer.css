@@ -1,3 +1,4 @@
 .footer {
+  --min: 15ch;
   padding-block: var(--s2);
 }
