@@ -9,7 +9,7 @@ defmodule JoelKoch.Dev.ContentPage do
   def template(assigns) do
     ~H"""
     <p>
-      Here you'll find all my content. Images and summaries are AI generated, thoughts are not.
+      Here you'll find all my content. Images and summaries are mostly AI generated, thoughts are not.
     </p>
     <h1 id="articles">Articles</h1>
     <ul role="list" class="cluster">
