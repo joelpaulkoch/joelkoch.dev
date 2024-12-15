@@ -2,7 +2,7 @@
 title: Schildpad Launcher
 layout: JoelKoch.Dev.PageLayout
 summary: An Android launcher app built with Flutter.
-image: "images/schildpad_logo.svg"
+image: "/images/schildpad_logo.svg"
 content: true
 ---
 
@@ -11,7 +11,7 @@ content: true
 
 You can find the [archived repository on GitHub](https://github.com/joelpaulkoch/schildpad).
 
-![Schildpad Logo](/images/schildpad_logo.svg)
+![Schildpad Logo](/images/schildpad_logo.svg "Schildpad Logo")
 
 # Why did I do it?
 When I first started to learn programming, I wanted to build an Android launcher app.
