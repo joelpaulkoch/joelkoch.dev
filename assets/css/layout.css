@@ -96,6 +96,18 @@
   }
 }
 
+.switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  --threshold: 30rem;
+}
+
+.switcher > * {
+  flex-grow: 1;
+  flex-basis: calc((var(--threshold) - 100%) * 999);
+}
+
 .wrapper {
   max-width: 55rem;
   padding-inline: var(--s1);

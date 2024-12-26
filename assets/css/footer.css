@@ -1,4 +1,5 @@
 .footer {
-  --min: 15ch;
   padding-block: var(--s2);
+  text-align: center;
+  justify-content: center;
 }

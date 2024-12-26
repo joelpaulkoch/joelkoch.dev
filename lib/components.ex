@@ -5,12 +5,12 @@ defmodule JoelKoch.Dev.Components do
 
   def footer(assigns) do
     ~H"""
-    <footer class={["grid | footer", @class]}>
-      <span>© 2024 Joël Koch</span>
-      <.socials />
+    <footer class={["switcher | footer", @class]}>
       <a href="https://github.com/elixir-tools/tableau">
         Built with Tableau
       </a>
+      <.socials class="max-inline-size:fit-content" />
+      <span>© 2024 Joël Koch</span>
     </footer>
     """
   end
@@ -49,9 +49,11 @@ defmodule JoelKoch.Dev.Components do
     """
   end
 
+  attr(:class, :string, default: nil)
+
   def socials(assigns) do
     ~H"""
-    <ul class="cluster" role="list">
+    <ul class={["cluster", @class]} role="list">
       <li>
         <a class="transitions rotate" href="https://elixirforum.com/u/joelpaulkoch/">
           <svg
