@@ -1,14 +1,14 @@
 :root {
-  --brand-color: oklch(75% 0.2 100);
-  --swatch-1: oklch(from var(--brand-color) 0.99 0.02 h);
-  --swatch-2: oklch(from var(--brand-color) 0.8 0.1 h);
-  --swatch-3: oklch(from var(--brand-color) 0.6 0.15 h);
-  --swatch-4: oklch(from var(--brand-color) 0.3 0.01 h);
+  --brand-color: oklch(65% 0.1 125);
+  --swatch-1: oklch(from var(--brand-color) 0.99 0.03 h);
+  --swatch-2: oklch(from var(--brand-color) 0.8 c h);
+  --swatch-3: oklch(from var(--brand-color) 0.6 c h);
+  --swatch-4: oklch(from var(--brand-color) 0.4 0.02 h);
 
   --background-color: light-dark(var(--swatch-1), var(--swatch-4));
   --background-highlight-color: light-dark(var(--swatch-2), var(--swatch-3));
   --text-color: light-dark(var(--swatch-4), var(--swatch-1));
-  --accent-color: var(--brand-color);
+  --accent-color: oklch(from var(--brand-color) calc(1.1 * l) calc(2.5 * c) h);
 
   --font-base: ui-sans-serif, system-ui, sans-serif, Apple Color Emoji,
     Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
@@ -34,7 +34,7 @@
 }
 
 ::selection {
-  background-color: var(--accent-color);
+  background-color: var(--brand-color);
 }
 
 html {
