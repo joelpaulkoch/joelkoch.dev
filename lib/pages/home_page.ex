@@ -10,7 +10,7 @@ defmodule JoelKoch.Dev.HomePage do
     ~H"""
     <main>
       <div class="cover center">
-        <div class="grid" data-principal-element>
+        <div class="grid | padding-block:s-1" data-principal-element>
           <img
             src="/images/me.webp"
             alt="A picture of me, Joël Koch"

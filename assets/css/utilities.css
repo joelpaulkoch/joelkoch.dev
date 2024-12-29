@@ -26,6 +26,10 @@
   padding-inline: var(--s0);
 }
 
+.padding-block\:s-1 {
+  padding-block: var(--s-1);
+}
+
 .radius {
   border-radius: 0.5rem;
 }
