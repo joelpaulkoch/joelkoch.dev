@@ -19,7 +19,7 @@ defmodule JoelKoch.Dev.Components do
 
   def header(assigns) do
     ~H"""
-    <header class={["cluster | nav | justify-content:flex-end padding-inline:s0", @class]}>
+    <header class={["cluster | nav | padding-inline:s0", @class]}>
       <nav class="wrapper">
         <ul role="list" class="cluster">
           <li>
