@@ -9,18 +9,24 @@ layout: JoelKoch.Dev.PageLayout
 
 Software Developer, since July 2024
 
+<div class="padding-inline-start:s0">
+
 ### What I worked on
 We built a new project in the medical space from scratch, I worked on the **Elixir** backend. 
 
 ### What I learned
+
 - how to structure projects properly, which responsibility we address in which layer
 - **Phoenix** as a web framework, **LiveView** for our admin interface and **Absinthe** for a GraphQL API 
 - how to schedule mails using **Oban** and a lot about handling data with **Ecto**
 - how to implement a two-factor authentication system
+</div>
 
 ## osapiens
 
 Software Development Engineer, July 2023 – Dec 2023
+
+<div class="padding-inline-start:s0">
 
 ### What I worked on
 We built a SaaS product for supply chain regulation, I worked on the **TypeScript** backend.
@@ -29,9 +35,13 @@ We built a SaaS product for supply chain regulation, I worked on the **TypeScrip
 - how to work with a custom cloud platform that's kind of undocumented
 - how to do data migrations in complex production setups
 
+</div>
+
 ## Treye Tech
 
 Working Student, Mar 2020 – Aug 2022
+
+<div class="padding-inline-start:s0">
 
 ### What I worked on
 We developed an accessibility tool for gaze control of Windows computers from scratch.
@@ -44,9 +54,13 @@ We built on top of **OpenCV** and developed in **C++**.
 - how to work with **Docker** and set up a **CI** pipeline
 - how to improve performance with concurrency, we went from 8 frames per seconds to 30, the limit of the webcam
 
+</div>
+
 ## Caterpillar Energy Solutions
 
 Working Student, Nov 2018 – Nov 2019
+
+<div class="padding-inline-start:s0">
 
 ### What I worked on
 I ported a remote control tool for a gas turbine control simulation test stand from **Python** to **C#** to integrate with existing software testing systems.
@@ -54,6 +68,8 @@ I ported a remote control tool for a gas turbine control simulation test stand f
 ### What I learned
 - how to apply software patterns
 - testing is an extremely important part of software development
+
+</div>
 
 ---
 
@@ -63,6 +79,7 @@ I ported a remote control tool for a gas turbine control simulation test stand f
 
 M. Sc. Management of Technology, Sept 2020 – Apr 2023
 
+<div class="padding-inline-start:s0">
 
 ### What is it about
 A really diverse study program, that's at the intersection of technology and sociology.
@@ -80,10 +97,13 @@ It's also about technological clusters and their impact on societies.
 
 My thesis: _Switching from Open Source to Cloud Protection License: What is the impact on Community Health?_
 
+</div>
+
 ## Technion
 
 Semester Abroad, Sept 2020 – Apr 2023
 
+<div class="padding-inline-start:s0">
 
 ### What is it about
 
@@ -92,10 +112,13 @@ Courses
 - Digital Image Processing
 - History of the Middle East
 
+</div>
+
 ## TU Munich
 
 B. Sc. Informatics, Oct 2016 – Aug 2020
 
+<div class="padding-inline-start:s0">
 
 ### What is it about
 All the basics of computer science.
@@ -105,9 +128,13 @@ All the basics of computer science.
 
 My thesis: _Structuring Large Sensor Data from Wind Turbines for Analysis and Visualization_ (in **Python**)
 
+</div>
+
 ## TU Munich
 
 B. Sc. Mechanical Engineering, Oct 2014 – June 2018
+
+<div class="padding-inline-start:s0">
 
 ### What is it about
 All the basics of mechanical engineering.
@@ -116,3 +143,5 @@ All the basics of mechanical engineering.
 - some maths, some electronics, some information technologies
 
 My thesis: _Applications of Remote Control in New Space_
+
+</div>
