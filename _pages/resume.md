@@ -101,7 +101,7 @@ My thesis: _Switching from Open Source to Cloud Protection License: What is the 
 
 ## Technion
 
-Semester Abroad, Sept 2020 – Apr 2023
+Semester Abroad, Oct 2019 – Feb 2020
 
 <div class="padding-inline-start:s0">
 
