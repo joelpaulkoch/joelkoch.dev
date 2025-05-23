@@ -38,20 +38,6 @@ defmodule JoelKoch.Dev.ContentPage do
         </.card>
       </li>
     </ul>
-
-    <h1 id="devlogs">Devlogs</h1>
-    <ul role="list" class="cluster">
-      <li :for={post <- @posts}>
-        <.card>
-          <img :if={post[:image]} src={post.image} alt="" width="256" height="256" />
-          <h2>{post.title}</h2>
-          <p>
-            {post.summary}
-          </p>
-          <a href={post.permalink}>Devlog from {DateTime.to_date(post.date)}</a>
-        </.card>
-      </li>
-    </ul>
     """
   end
 end
