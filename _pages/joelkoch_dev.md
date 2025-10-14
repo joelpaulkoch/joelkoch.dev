@@ -38,7 +38,7 @@ It takes care of all that, so it felt like a perfect tool to write plain, modern
 
 I also started digging into how I can enhance my approach to web design and I'm infinitely thankful that I found this talk by Andy Bell.
 
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/5uhIiI9Ld5M?si=eKzZ1C5UCn4mkWCs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="100%" style="aspect-ratio: 16 / 9;" src="https://www.youtube-nocookie.com/embed/5uhIiI9Ld5M?si=eKzZ1C5UCn4mkWCs" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 After watching the recording, I found out that I had [cube.fyi](https://cube.fyi) bookmarked a while ago.
 I started learning more about CUBE CSS, found [every-layout.dev](https://every-layout.dev) and [smolcss.dev](https://smolcss.dev) which gave me more insights into how I feel I should work.
